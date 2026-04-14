@@ -31,14 +31,19 @@ app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.get('/api/state', (req, res) => {
-  const data = readData();
-  const stats = computeStats(data.players, data.weeks);
-  res.json({
-    players: data.players,
-    currentWeek: data.weeks.length > 0 ? data.weeks[data.weeks.length - 1] : null,
-    weeks: [...data.weeks].reverse(),
-    stats,
-  });
+  try {
+    const data = readData();
+    const stats = computeStats(data.players, data.weeks);
+    res.json({
+      players: data.players,
+      currentWeek: data.weeks.length > 0 ? data.weeks[data.weeks.length - 1] : null,
+      weeks: [...data.weeks].reverse(),
+      stats,
+    });
+  } catch (err) {
+    console.error('Failed to read state:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
 });
 
 module.exports = { app };
