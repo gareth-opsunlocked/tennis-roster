@@ -82,6 +82,13 @@ describe('POST /api/week', () => {
     expect(res.body.currentWeek).not.toBeNull();
   });
 
+  test('returns 400 when duplicate players are sent', async () => {
+    const res = await request(app)
+      .post('/api/week')
+      .send({ players: ['Rick', 'Rick', 'Rick', 'Rick'] });
+    expect(res.status).toBe(400);
+  });
+
   test('stats update after a week is created', async () => {
     const players = ['Rick', 'Gareth', 'Lachy', 'Miles'];
     const weekRes = await request(app).post('/api/week').send({ players });

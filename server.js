@@ -52,11 +52,14 @@ app.post('/api/week', (req, res) => {
     const data = readData();
 
     if (!Array.isArray(players) || players.length !== 4) {
-      return res.status(400).send('Exactly 4 players required');
+      return res.status(400).json({ error: 'Exactly 4 players required' });
+    }
+    if (new Set(players).size !== players.length) {
+      return res.status(400).json({ error: 'Duplicate players are not allowed' });
     }
     for (const p of players) {
       if (!data.players.includes(p)) {
-        return res.status(400).send(`Unknown player: ${p}`);
+        return res.status(400).json({ error: `Unknown player: ${p}` });
       }
     }
 
