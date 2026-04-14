@@ -78,6 +78,8 @@ Accepts the list of players for this week, runs the fairness algorithm, appends 
 
 **Validation:** exactly 4 players, all must be in the master players list.
 
+**Date calculation:** the server automatically sets `date` to the nearest Thursday (the Thursday of the current week — if today is past Thursday, it uses next Thursday; if today is Thursday, it uses today). No date input is required from the user.
+
 **Response:** the newly created week object (same shape as a week entry).
 
 ---
