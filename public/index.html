@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Thursday Tennis</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #f0f4f0;
+      color: #1a2e1a;
+      min-height: 100vh;
+    }
+
+    header {
+      background: #2d6a4f;
+      color: white;
+      padding: 16px 20px;
+    }
+    header h1 { font-size: 1.25rem; font-weight: 700; margin-bottom: 4px; }
+    #week-meta { font-size: 0.85rem; opacity: 0.85; display: flex; gap: 10px; align-items: center; }
+    .badge {
+      background: rgba(255,255,255,0.25);
+      padding: 2px 8px;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+
+    main { max-width: 480px; margin: 0 auto; padding: 20px 16px; display: flex; flex-direction: column; gap: 24px; }
+
+    /* --- Role Cards --- */
+    #role-cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+      gap: 12px;
+    }
+    .role-card {
+      background: white;
+      border-radius: 10px;
+      padding: 16px 12px;
+      text-align: center;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+    }
+    .role-card .icon { font-size: 1.75rem; margin-bottom: 6px; }
+    .role-card .player { font-weight: 700; font-size: 1rem; color: #2d6a4f; margin-bottom: 2px; }
+    .role-card .label { font-size: 0.75rem; color: #6c757d; text-transform: uppercase; letter-spacing: 0.04em; }
+
+    /* --- Player chips (who's playing) --- */
+    #playing-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; }
+    .chip {
+      background: #e8f5e9;
+      color: #2d6a4f;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 0.85rem;
+      font-weight: 500;
+    }
+
+    /* --- Set players section --- */
+    #set-week-area { background: white; border-radius: 10px; padding: 16px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
+    #set-week-btn {
+      width: 100%;
+      background: none;
+      border: 2px solid #2d6a4f;
+      color: #2d6a4f;
+      padding: 10px;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    #set-week-btn:hover { background: #e8f5e9; }
+
+    #player-select { margin-top: 14px; display: none; }
+    #player-select.open { display: block; }
+    #player-select .select-label { font-size: 0.8rem; color: #6c757d; margin-bottom: 10px; }
+    #toggle-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+    .toggle-chip {
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 0.875rem;
+      font-weight: 500;
+      cursor: pointer;
+      border: 2px solid #2d6a4f;
+      background: white;
+      color: #2d6a4f;
+      transition: background 0.15s, color 0.15s;
+    }
+    .toggle-chip.selected { background: #2d6a4f; color: white; }
+    #select-count { font-size: 0.8rem; color: #6c757d; display: block; margin-bottom: 10px; }
+
+    #assign-btn {
+      width: 100%;
+      background: #2d6a4f;
+      color: white;
+      border: none;
+      padding: 10px;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    #assign-btn:disabled { background: #adb5bd; cursor: not-allowed; }
+    #error-msg { color: #dc3545; font-size: 0.85rem; margin-top: 8px; display: none; }
+
+    /* --- No week state --- */
+    #no-week {
+      background: white;
+      border-radius: 10px;
+      padding: 24px;
+      text-align: center;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+    }
+    #no-week p { color: #6c757d; margin-bottom: 12px; font-size: 0.9rem; }
+
+    /* --- Stats --- */
+    #stats-section h2 { font-size: 1rem; font-weight: 700; margin-bottom: 12px; color: #2d6a4f; }
+    #stats-cards { display: flex; flex-direction: column; gap: 10px; }
+    .stat-card {
+      background: white;
+      border-radius: 10px;
+      padding: 14px 16px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .stat-name { font-weight: 700; font-size: 0.95rem; }
+    .stat-total { font-size: 0.75rem; color: #6c757d; margin-top: 1px; }
+    .stat-badges { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
+    .stat-badge {
+      padding: 3px 8px;
+      border-radius: 4px;
+      font-size: 0.8rem;
+      font-weight: 600;
+    }
+    .badge-paying { background: #fff3cd; color: #856404; }
+    .badge-balls  { background: #cfe2ff; color: #084298; }
+    .badge-drinks { background: #d1e7dd; color: #0f5132; }
+
+    /* --- History --- */
+    #history-section h2 { font-size: 1rem; font-weight: 700; margin-bottom: 12px; color: #2d6a4f; }
+    #toggle-history {
+      background: none;
+      border: none;
+      color: #2d6a4f;
+      font-size: 0.875rem;
+      font-weight: 600;
+      cursor: pointer;
+      padding: 0;
+      margin-bottom: 10px;
+    }
+    #history-list { display: none; flex-direction: column; gap: 8px; }
+    #history-list.open { display: flex; }
+    .history-entry {
+      background: white;
+      border-radius: 8px;
+      padding: 12px 14px;
+      font-size: 0.85rem;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    }
+    .history-entry .h-date { font-weight: 700; color: #2d6a4f; margin-bottom: 3px; }
+    .history-entry .h-detail { color: #495057; }
+    .history-entry .h-players { color: #6c757d; font-size: 0.78rem; margin-top: 3px; }
+
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>🎾 Thursday Tennis</h1>
+  <div id="week-meta"></div>
+</header>
+
+<main>
+
+  <!-- Section 1: This Week -->
+  <section id="this-week-section">
+    <div id="no-week" class="hidden">
+      <p>No week set yet. Select who's playing to get started.</p>
+    </div>
+
+    <div id="week-display" class="hidden">
+      <div id="role-cards"></div>
+      <div id="playing-chips" style="margin-top:14px;"></div>
+    </div>
+
+    <div id="set-week-area" style="margin-top:12px;">
+      <button id="set-week-btn">Set This Week's Players</button>
+      <div id="player-select">
+        <p class="select-label" style="margin-top:14px;">Tap to toggle players in/out:</p>
+        <div id="toggle-chips"></div>
+        <span id="select-count">0 of 4 selected</span>
+        <button id="assign-btn" disabled>Assign Duties →</button>
+        <p id="error-msg"></p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Section 2: Stats -->
+  <section id="stats-section">
+    <h2>Duty Stats</h2>
+    <div id="stats-cards"></div>
+  </section>
+
+  <!-- Section 3: History -->
+  <section id="history-section">
+    <button id="toggle-history">Show history ▼</button>
+    <div id="history-list"></div>
+  </section>
+
+</main>
+
+<script>
+  // JS added in Task 6 and 7
+</script>
+</body>
+</html>
