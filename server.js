@@ -1,0 +1,49 @@
+const express = require('express');
+const fs = require('fs');
+const path = require('path');
+const { assignDuties, computeStats, getNearestThursday } = require('./algorithm');
+
+const DEFAULT_DATA = {
+  players: ['Rick', 'Gareth', 'Lachy', 'Miles', 'Scott'],
+  weeks: [],
+};
+
+function getDataFile() {
+  return process.env.DATA_FILE || path.join(__dirname, 'data', 'roster.json');
+}
+
+function readData() {
+  const file = getDataFile();
+  if (!fs.existsSync(file)) {
+    fs.mkdirSync(path.dirname(file), { recursive: true });
+    fs.writeFileSync(file, JSON.stringify(DEFAULT_DATA, null, 2));
+    return JSON.parse(JSON.stringify(DEFAULT_DATA));
+  }
+  return JSON.parse(fs.readFileSync(file, 'utf8'));
+}
+
+function writeData(data) {
+  fs.writeFileSync(getDataFile(), JSON.stringify(data, null, 2));
+}
+
+const app = express();
+app.use(express.json());
+app.use(express.static(path.join(__dirname, 'public')));
+
+app.get('/api/state', (req, res) => {
+  const data = readData();
+  const stats = computeStats(data.players, data.weeks);
+  res.json({
+    players: data.players,
+    currentWeek: data.weeks.length > 0 ? data.weeks[data.weeks.length - 1] : null,
+    weeks: [...data.weeks].reverse(),
+    stats,
+  });
+});
+
+module.exports = { app };
+
+if (require.main === module) {
+  const port = process.env.PORT || 3000;
+  app.listen(port, () => console.log(`Server running on http://localhost:${port}`));
+}
