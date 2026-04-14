@@ -4,6 +4,7 @@
  */
 function pickLowest(role, players, counts, exclude) {
   const candidates = players.filter(p => !exclude.includes(p));
+  if (candidates.length === 0) throw new Error(`No candidates available for role: ${role}`);
   const min = Math.min(...candidates.map(p => counts[p][role]));
   const tied = candidates.filter(p => counts[p][role] === min);
   return tied[Math.floor(Math.random() * tied.length)];
@@ -75,12 +76,12 @@ function computeStats(allPlayers, weeks) {
  */
 function getNearestThursday() {
   const now = new Date();
-  const daysUntil = (4 - now.getDay() + 7) % 7;
+  const daysUntil = (4 - now.getUTCDay() + 7) % 7;
   const thursday = new Date(now);
-  thursday.setDate(now.getDate() + daysUntil);
-  const year = thursday.getFullYear();
-  const month = String(thursday.getMonth() + 1).padStart(2, '0');
-  const day = String(thursday.getDate()).padStart(2, '0');
+  thursday.setUTCDate(now.getUTCDate() + daysUntil);
+  const year = thursday.getUTCFullYear();
+  const month = String(thursday.getUTCMonth() + 1).padStart(2, '0');
+  const day = String(thursday.getUTCDate()).padStart(2, '0');
   return `${year}-${month}-${day}`;
 }
 
