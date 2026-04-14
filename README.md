@@ -19,6 +19,8 @@ npm test         # run tests
    - **Runtime:** Node
    - **Build command:** `npm install`
    - **Start command:** `node server.js`
-5. Click Deploy.
+5. Add environment variable:
+   - `TZ` = `Australia/Sydney` (so Thursday dates are calculated in local time)
+6. Click Deploy.
 
 > **Note:** Render's free tier may reset the filesystem on restart, which will wipe `data/roster.json`. For persistence, upgrade to a paid plan or migrate `roster.json` to a hosted database.

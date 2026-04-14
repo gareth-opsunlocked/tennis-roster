@@ -83,8 +83,19 @@ describe('getNearestThursday', () => {
 
   test('returned date is a Thursday', () => {
     const result = getNearestThursday();
-    // Parse as noon UTC to avoid timezone-shift issues with date-only strings
-    const date = new Date(result + 'T12:00:00Z');
-    expect(date.getUTCDay()).toBe(4);
+    const date = new Date(result);
+    // getDay() on a date-only string (no time component) is parsed as local midnight
+    expect(date.getDay()).toBe(4);
+  });
+
+  test('accepts a custom now date for testability', () => {
+    // Wednesday 16 Apr 2025 → next Thursday is 17 Apr
+    const wednesday = new Date(2025, 3, 16); // month is 0-indexed
+    expect(getNearestThursday(wednesday)).toBe('2025-04-17');
+  });
+
+  test('returns same day when now is already Thursday', () => {
+    const thursday = new Date(2025, 3, 17); // Thursday 17 Apr 2025
+    expect(getNearestThursday(thursday)).toBe('2025-04-17');
   });
 });

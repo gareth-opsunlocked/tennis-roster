@@ -74,14 +74,13 @@ function computeStats(allPlayers, weeks) {
  * If today is Thursday, returns today.
  * Otherwise returns the next Thursday.
  */
-function getNearestThursday() {
-  const now = new Date();
-  const daysUntil = (4 - now.getUTCDay() + 7) % 7;
+function getNearestThursday(now = new Date()) {
+  const daysUntil = (4 - now.getDay() + 7) % 7;
   const thursday = new Date(now);
-  thursday.setUTCDate(now.getUTCDate() + daysUntil);
-  const year = thursday.getUTCFullYear();
-  const month = String(thursday.getUTCMonth() + 1).padStart(2, '0');
-  const day = String(thursday.getUTCDate()).padStart(2, '0');
+  thursday.setDate(now.getDate() + daysUntil);
+  const year = thursday.getFullYear();
+  const month = String(thursday.getMonth() + 1).padStart(2, '0');
+  const day = String(thursday.getDate()).padStart(2, '0');
   return `${year}-${month}-${day}`;
 }
 
