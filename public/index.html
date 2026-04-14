@@ -216,7 +216,192 @@
 </main>
 
 <script>
-  // JS added in Task 6 and 7
+  const PLAYERS_ALL = ['Rick', 'Gareth', 'Lachy', 'Miles', 'Scott'];
+
+  let state = null;
+
+  async function loadState() {
+    const res = await fetch('/api/state');
+    state = await res.json();
+    render();
+  }
+
+  function render() {
+    renderHeader();
+    renderThisWeek();
+    renderStats();
+    renderHistory();
+  }
+
+  function renderHeader() {
+    const meta = document.getElementById('week-meta');
+    if (!state.currentWeek) { meta.textContent = ''; return; }
+    const w = state.currentWeek;
+    const dateStr = new Date(w.date + 'T12:00:00Z').toLocaleDateString('en-AU', { weekday: 'long', day: 'numeric', month: 'long' });
+    meta.innerHTML = `<span>${dateStr}</span><span>Week ${w.weekNumber}</span>${w.ballsWeek ? '<span class="badge">Balls week</span>' : ''}`;
+  }
+
+  function renderThisWeek() {
+    const noWeek = document.getElementById('no-week');
+    const weekDisplay = document.getElementById('week-display');
+
+    if (!state.currentWeek) {
+      noWeek.classList.remove('hidden');
+      weekDisplay.classList.add('hidden');
+      return;
+    }
+
+    noWeek.classList.add('hidden');
+    weekDisplay.classList.remove('hidden');
+
+    const w = state.currentWeek;
+    const roles = [
+      { key: 'paying', icon: '💰', label: 'Court Hire' },
+      ...(w.ballsWeek ? [{ key: 'balls', icon: '🎾', label: 'New Balls' }] : []),
+      { key: 'drinks', icon: '🥤', label: 'Drinks' },
+    ];
+
+    document.getElementById('role-cards').innerHTML = roles.map(r => `
+      <div class="role-card">
+        <div class="icon">${r.icon}</div>
+        <div class="player">${w.assignments[r.key]}</div>
+        <div class="label">${r.label}</div>
+      </div>
+    `).join('');
+
+    document.getElementById('playing-chips').innerHTML =
+      '<div style="font-size:0.75rem;color:#6c757d;width:100%;margin-bottom:4px;">PLAYING THIS WEEK</div>' +
+      w.players.map(p => `<span class="chip">${p}</span>`).join('');
+  }
+
+  function renderStats() {
+    const container = document.getElementById('stats-cards');
+    const sorted = Object.entries(state.stats)
+      .sort((a, b) => a[1].total - b[1].total);
+
+    container.innerHTML = sorted.map(([name, s]) => `
+      <div class="stat-card">
+        <div>
+          <div class="stat-name">${name}</div>
+          <div class="stat-total">${s.total} duties total</div>
+        </div>
+        <div class="stat-badges">
+          <span class="stat-badge badge-paying">💰 ×${s.paying}</span>
+          <span class="stat-badge badge-balls">🎾 ×${s.balls}</span>
+          <span class="stat-badge badge-drinks">🥤 ×${s.drinks}</span>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  function renderHistory() {
+    const container = document.getElementById('history-list');
+    if (state.weeks.length === 0) {
+      container.innerHTML = '<p style="color:#6c757d;font-size:0.85rem;">No weeks recorded yet.</p>';
+      return;
+    }
+
+    container.innerHTML = state.weeks.map(w => {
+      const a = w.assignments;
+      const dateStr = new Date(w.date + 'T12:00:00Z').toLocaleDateString('en-AU', { day: 'numeric', month: 'short', year: 'numeric' });
+      const parts = [
+        `${a.paying} paid`,
+        ...(a.balls ? [`${a.balls} brought balls`] : []),
+        `${a.drinks} brought drinks`,
+      ];
+      return `
+        <div class="history-entry">
+          <div class="h-date">${dateStr} — Week ${w.weekNumber}</div>
+          <div class="h-detail">${parts.join(' · ')}</div>
+          <div class="h-players">${w.players.join(', ')}</div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  // History toggle
+  document.getElementById('toggle-history').addEventListener('click', function () {
+    const list = document.getElementById('history-list');
+    const open = list.classList.toggle('open');
+    this.textContent = open ? 'Hide history ▲' : 'Show history ▼';
+  });
+
+  // --- Player selection ---
+
+  let selectedPlayers = new Set();
+
+  function renderToggleChips() {
+    const container = document.getElementById('toggle-chips');
+    container.innerHTML = PLAYERS_ALL.map(p => `
+      <button class="toggle-chip${selectedPlayers.has(p) ? ' selected' : ''}"
+              data-player="${p}"
+              onclick="togglePlayer(this, '${p}')">
+        ${selectedPlayers.has(p) ? '✓ ' : ''}${p}
+      </button>
+    `).join('');
+    updateSelectCount();
+  }
+
+  function togglePlayer(btn, player) {
+    if (selectedPlayers.has(player)) {
+      selectedPlayers.delete(player);
+    } else {
+      selectedPlayers.add(player);
+    }
+    renderToggleChips();
+  }
+
+  function updateSelectCount() {
+    const n = selectedPlayers.size;
+    document.getElementById('select-count').textContent = `${n} of 4 selected`;
+    document.getElementById('assign-btn').disabled = n !== 4;
+  }
+
+  document.getElementById('set-week-btn').addEventListener('click', function () {
+    const panel = document.getElementById('player-select');
+    const isOpen = panel.classList.toggle('open');
+    this.textContent = isOpen ? 'Cancel ✕' : 'Set This Week\'s Players';
+    if (isOpen) {
+      selectedPlayers = new Set();
+      renderToggleChips();
+    }
+  });
+
+  document.getElementById('assign-btn').addEventListener('click', async function () {
+    const errEl = document.getElementById('error-msg');
+    errEl.style.display = 'none';
+    this.disabled = true;
+    this.textContent = 'Assigning…';
+
+    try {
+      const res = await fetch('/api/week', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ players: [...selectedPlayers] }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({ error: 'Request failed' }));
+        errEl.textContent = data.error || 'Request failed';
+        errEl.style.display = 'block';
+        this.disabled = false;
+        this.textContent = 'Assign Duties →';
+        return;
+      }
+
+      // Close panel, reload state
+      document.getElementById('player-select').classList.remove('open');
+      document.getElementById('set-week-btn').textContent = 'Set This Week\'s Players';
+      await loadState();
+    } catch (e) {
+      errEl.textContent = 'Network error — please try again.';
+      errEl.style.display = 'block';
+      this.disabled = false;
+      this.textContent = 'Assign Duties →';
+    }
+  });
+
+  loadState();
 </script>
 </body>
 </html>
