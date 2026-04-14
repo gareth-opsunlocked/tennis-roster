@@ -216,14 +216,18 @@
 </main>
 
 <script>
-  const PLAYERS_ALL = ['Rick', 'Gareth', 'Lachy', 'Miles', 'Scott'];
-
   let state = null;
 
   async function loadState() {
-    const res = await fetch('/api/state');
-    state = await res.json();
-    render();
+    try {
+      const res = await fetch('/api/state');
+      if (!res.ok) throw new Error(`Server error: ${res.status}`);
+      state = await res.json();
+      render();
+    } catch (e) {
+      document.querySelector('main').innerHTML =
+        '<p style="color:#dc3545;padding:20px;text-align:center;">Failed to load roster data. Please refresh the page.</p>';
+    }
   }
 
   function render() {
@@ -332,7 +336,7 @@
 
   function renderToggleChips() {
     const container = document.getElementById('toggle-chips');
-    container.innerHTML = PLAYERS_ALL.map(p => `
+    container.innerHTML = state.players.map(p => `
       <button class="toggle-chip${selectedPlayers.has(p) ? ' selected' : ''}"
               data-player="${p}"
               onclick="togglePlayer(this, '${p}')">
@@ -364,6 +368,7 @@
     if (isOpen) {
       selectedPlayers = new Set();
       renderToggleChips();
+      document.getElementById('assign-btn').textContent = 'Assign Duties →';
     }
   });
 
