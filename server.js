@@ -46,6 +46,39 @@ app.get('/api/state', (req, res) => {
   }
 });
 
+app.post('/api/week', (req, res) => {
+  try {
+    const { players } = req.body;
+    const data = readData();
+
+    if (!Array.isArray(players) || players.length !== 4) {
+      return res.status(400).send('Exactly 4 players required');
+    }
+    for (const p of players) {
+      if (!data.players.includes(p)) {
+        return res.status(400).send(`Unknown player: ${p}`);
+      }
+    }
+
+    const { weekNumber, ballsWeek, assignments } = assignDuties(players, data.weeks);
+    const week = {
+      date: getNearestThursday(),
+      weekNumber,
+      ballsWeek,
+      players,
+      assignments,
+    };
+
+    data.weeks.push(week);
+    writeData(data);
+
+    res.json(week);
+  } catch (err) {
+    console.error('Failed to assign week:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 module.exports = { app };
 
 if (require.main === module) {
