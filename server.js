@@ -150,6 +150,10 @@ app.put('/api/week/:weekNumber', async (req, res) => {
 
     const { paying, balls, drinks } = assignments;
 
+    if (!paying || !drinks) {
+      return res.status(400).json({ error: 'paying and drinks are required' });
+    }
+
     if (!week.players.includes(paying)) {
       return res.status(400).json({ error: `${paying} did not play in week ${weekNumber}` });
     }

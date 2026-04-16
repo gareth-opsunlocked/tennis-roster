@@ -51,7 +51,7 @@ function assignDuties(players, weeks) {
 
 /**
  * Returns duty counts per player across all weeks.
- * allPlayers is the full master list (all 5), not just those who played.
+ * allPlayers is the full master list (all 7), not just those who played.
  */
 function computeStats(allPlayers, weeks) {
   const stats = {};
