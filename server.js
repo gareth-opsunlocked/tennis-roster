@@ -134,6 +134,47 @@ app.post('/api/week', async (req, res) => {
   }
 });
 
+app.put('/api/week/:weekNumber', async (req, res) => {
+  try {
+    const weekNumber = parseInt(req.params.weekNumber, 10);
+    const { assignments } = req.body;
+    if (!assignments) {
+      return res.status(400).json({ error: 'assignments required' });
+    }
+
+    const data = await readData();
+    const week = data.weeks.find(w => w.weekNumber === weekNumber);
+    if (!week) {
+      return res.status(404).json({ error: `Week ${weekNumber} not found` });
+    }
+
+    const { paying, balls, drinks } = assignments;
+
+    if (!week.players.includes(paying)) {
+      return res.status(400).json({ error: `${paying} did not play in week ${weekNumber}` });
+    }
+    if (!week.players.includes(drinks)) {
+      return res.status(400).json({ error: `${drinks} did not play in week ${weekNumber}` });
+    }
+    if (week.ballsWeek) {
+      if (!balls || !week.players.includes(balls)) {
+        return res.status(400).json({ error: "balls must be one of this week's players on a balls week" });
+      }
+    } else {
+      if (balls != null) {
+        return res.status(400).json({ error: 'balls must be null on non-balls weeks' });
+      }
+    }
+
+    week.assignments = { paying, balls: balls ?? null, drinks };
+    await writeData(data);
+    res.json(week);
+  } catch (err) {
+    console.error('Failed to update week:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 module.exports = { app };
 
 if (require.main === module) {

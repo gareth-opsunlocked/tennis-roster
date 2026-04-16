@@ -98,3 +98,56 @@ describe('POST /api/week', () => {
     expect(stateRes.body.stats[payer].total).toBeGreaterThanOrEqual(1);
   });
 });
+
+describe('PUT /api/week/:weekNumber', () => {
+  beforeEach(async () => {
+    // Create week 1 (balls week) with known players
+    await request(app)
+      .post('/api/week')
+      .send({ players: ['Rick', 'Gareth', 'Lachy', 'Scott'] });
+  });
+
+  test('returns 200 and updated assignments on valid edit', async () => {
+    const res = await request(app)
+      .put('/api/week/1')
+      .send({ assignments: { paying: 'Gareth', balls: 'Rick', drinks: 'Lachy' } });
+    expect(res.status).toBe(200);
+    expect(res.body.assignments.paying).toBe('Gareth');
+    expect(res.body.assignments.balls).toBe('Rick');
+    expect(res.body.assignments.drinks).toBe('Lachy');
+  });
+
+  test('returns 404 for non-existent week number', async () => {
+    const res = await request(app)
+      .put('/api/week/999')
+      .send({ assignments: { paying: 'Rick', balls: 'Gareth', drinks: 'Lachy' } });
+    expect(res.status).toBe(404);
+  });
+
+  test('returns 400 when paying player was not in that week', async () => {
+    const res = await request(app)
+      .put('/api/week/1')
+      .send({ assignments: { paying: 'Miles', balls: 'Rick', drinks: 'Lachy' } });
+    expect(res.status).toBe(400);
+  });
+
+  test('returns 400 when balls assigned on a non-balls week', async () => {
+    await request(app)
+      .post('/api/week')
+      .send({ players: ['Rick', 'Gareth', 'Lachy', 'Scott'] });
+    const res = await request(app)
+      .put('/api/week/2')
+      .send({ assignments: { paying: 'Rick', balls: 'Gareth', drinks: 'Lachy' } });
+    expect(res.status).toBe(400);
+  });
+
+  test('after edit, GET /api/state stats reflect the overridden assignments', async () => {
+    await request(app)
+      .put('/api/week/1')
+      .send({ assignments: { paying: 'Gareth', balls: 'Rick', drinks: 'Lachy' } });
+    const stateRes = await request(app).get('/api/state');
+    expect(stateRes.body.stats.Gareth.paying).toBe(1);
+    expect(stateRes.body.stats.Rick.balls).toBe(1);
+    expect(stateRes.body.stats.Lachy.drinks).toBe(1);
+  });
+});
