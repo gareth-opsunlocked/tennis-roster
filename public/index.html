@@ -362,6 +362,44 @@
     `).join('');
   }
 
+  function formatCopyText() {
+    const w = state.currentWeek;
+    const d = new Date(w.date + 'T12:00:00Z');
+    const dayNames = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+    const monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    const dayStr = `${dayNames[d.getUTCDay()]} ${d.getUTCDate()} ${monthNames[d.getUTCMonth()]}`;
+
+    let ballsLine;
+    if (w.ballsWeek) {
+      ballsLine = `🎾 Balls: ${w.assignments.balls} - week 1`;
+    } else {
+      const lastBallsWeek = state.weeks.find(wk => wk.assignments.balls !== null);
+      const lastBallsPerson = lastBallsWeek ? lastBallsWeek.assignments.balls : '?';
+      ballsLine = `🎾 Balls: ${lastBallsPerson} - week 2`;
+    }
+
+    return `Tennis ${dayStr} - Week ${w.weekNumber}\n💰 Paying: ${w.assignments.paying}\n${ballsLine}\n🍺 Drinks: ${w.assignments.drinks}`;
+  }
+
+  document.getElementById('copy-btn').addEventListener('click', async function () {
+    const text = formatCopyText();
+    try {
+      await navigator.clipboard.writeText(text);
+      this.textContent = 'Copied!';
+      setTimeout(() => { this.textContent = 'Copy for text'; }, 2000);
+    } catch (e) {
+      // Fallback for browsers without clipboard API
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.cssText = 'width:100%;margin-top:8px;font-size:0.85rem;resize:none;';
+      ta.rows = 4;
+      this.insertAdjacentElement('afterend', ta);
+      ta.select();
+      this.textContent = 'Select all and copy ↑';
+      this.onclick = null;
+    }
+  });
+
   function renderHistory() {
     const container = document.getElementById('history-list');
     if (state.weeks.length === 0) {
