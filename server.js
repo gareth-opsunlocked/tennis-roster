@@ -1,6 +1,7 @@
 const express = require('express');
 const fs = require('fs');
 const path = require('path');
+const { Pool } = require('pg');
 const { assignDuties, computeStats, getNearestThursday } = require('./algorithm');
 
 const DEFAULT_DATA = {
@@ -24,11 +25,23 @@ const SEED_DATA = {
   ],
 };
 
+const pool = process.env.DATABASE_URL
+  ? new Pool({ connectionString: process.env.DATABASE_URL, ssl: { rejectUnauthorized: false } })
+  : null;
+
 function getDataFile() {
   return process.env.DATA_FILE || path.join(__dirname, 'data', 'roster.json');
 }
 
-function readData() {
+async function readData() {
+  if (pool) {
+    const result = await pool.query('SELECT data FROM roster WHERE id = 1');
+    if (result.rows.length === 0) {
+      await writeData(SEED_DATA);
+      return JSON.parse(JSON.stringify(SEED_DATA));
+    }
+    return result.rows[0].data;
+  }
   const file = getDataFile();
   if (!fs.existsSync(file)) {
     fs.mkdirSync(path.dirname(file), { recursive: true });
@@ -38,7 +51,14 @@ function readData() {
   return JSON.parse(fs.readFileSync(file, 'utf8'));
 }
 
-function writeData(data) {
+async function writeData(data) {
+  if (pool) {
+    await pool.query(
+      'INSERT INTO roster (id, data) VALUES (1, $1) ON CONFLICT (id) DO UPDATE SET data = $1',
+      [JSON.stringify(data)]
+    );
+    return;
+  }
   fs.writeFileSync(getDataFile(), JSON.stringify(data, null, 2));
 }
 
@@ -46,9 +66,9 @@ const app = express();
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-app.get('/api/state', (req, res) => {
+app.get('/api/state', async (req, res) => {
   try {
-    const data = readData();
+    const data = await readData();
     const stats = computeStats(data.players, data.weeks);
     res.json({
       players: data.players,
@@ -62,10 +82,10 @@ app.get('/api/state', (req, res) => {
   }
 });
 
-app.post('/api/week', (req, res) => {
+app.post('/api/week', async (req, res) => {
   try {
     const { players } = req.body;
-    const data = readData();
+    const data = await readData();
 
     if (!Array.isArray(players) || players.length !== 4) {
       return res.status(400).json({ error: 'Exactly 4 players required' });
@@ -89,7 +109,7 @@ app.post('/api/week', (req, res) => {
     };
 
     data.weeks.push(week);
-    writeData(data);
+    await writeData(data);
 
     res.json(week);
   } catch (err) {
