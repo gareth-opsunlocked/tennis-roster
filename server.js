@@ -4,8 +4,24 @@ const path = require('path');
 const { assignDuties, computeStats, getNearestThursday } = require('./algorithm');
 
 const DEFAULT_DATA = {
-  players: ['Rick', 'Gareth', 'Lachy', 'Miles', 'Scott'],
+  players: ['Rick', 'Gareth', 'Lachy', 'Scott', 'Miles', 'Glenn', 'Grant'],
   weeks: [],
+};
+
+const SEED_DATA = {
+  players: ['Rick', 'Gareth', 'Lachy', 'Scott', 'Miles', 'Glenn', 'Grant'],
+  weeks: [
+    { date: '2026-01-01', weekNumber: 1,  ballsWeek: true,  players: ['Rick','Grant','Scott','Gareth'],  assignments: { paying: 'Rick',   balls: 'Scott',  drinks: 'Gareth' } },
+    { date: '2026-01-08', weekNumber: 2,  ballsWeek: false, players: ['Scott','Gareth','Lachy','Rick'],  assignments: { paying: 'Scott',  balls: null,     drinks: 'Rick'   } },
+    { date: '2026-01-15', weekNumber: 3,  ballsWeek: true,  players: ['Miles','Rick','Scott','Glenn'],   assignments: { paying: 'Miles',  balls: 'Glenn',  drinks: 'Glenn'  } },
+    { date: '2026-01-22', weekNumber: 4,  ballsWeek: false, players: ['Gareth','Glenn','Rick','Scott'],  assignments: { paying: 'Gareth', balls: null,     drinks: 'Scott'  } },
+    { date: '2026-01-29', weekNumber: 5,  ballsWeek: true,  players: ['Glenn','Gareth','Scott','Rick'],  assignments: { paying: 'Glenn',  balls: 'Rick',   drinks: 'Rick'   } },
+    { date: '2026-02-05', weekNumber: 6,  ballsWeek: false, players: ['Scott','Rick','Glenn','Gareth'],  assignments: { paying: 'Scott',  balls: null,     drinks: 'Gareth' } },
+    { date: '2026-02-12', weekNumber: 7,  ballsWeek: true,  players: ['Rick','Scott','Gareth','Glenn'],  assignments: { paying: 'Rick',   balls: 'Gareth', drinks: 'Glenn'  } },
+    { date: '2026-02-19', weekNumber: 8,  ballsWeek: false, players: ['Scott','Rick','Gareth','Glenn'],  assignments: { paying: 'Scott',  balls: null,     drinks: 'Glenn'  } },
+    { date: '2026-02-26', weekNumber: 9,  ballsWeek: true,  players: ['Rick','Scott','Lachy','Gareth'],  assignments: { paying: 'Rick',   balls: 'Scott',  drinks: 'Gareth' } },
+    { date: '2026-03-05', weekNumber: 10, ballsWeek: false, players: ['Gareth','Rick','Lachy','Scott'],  assignments: { paying: 'Gareth', balls: null,     drinks: 'Scott'  } },
+  ],
 };
 
 function getDataFile() {

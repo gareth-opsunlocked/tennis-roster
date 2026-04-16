@@ -17,15 +17,15 @@ describe('GET /api/state', () => {
   test('returns 200 with empty weeks and null currentWeek on first run', async () => {
     const res = await request(app).get('/api/state');
     expect(res.status).toBe(200);
-    expect(res.body.players).toEqual(['Rick', 'Gareth', 'Lachy', 'Miles', 'Scott']);
+    expect(res.body.players).toEqual(['Rick', 'Gareth', 'Lachy', 'Scott', 'Miles', 'Glenn', 'Grant']);
     expect(res.body.weeks).toEqual([]);
     expect(res.body.currentWeek).toBeNull();
   });
 
-  test('stats contains all 5 players with zero totals on first run', async () => {
+  test('stats contains all 7 players with zero totals on first run', async () => {
     const res = await request(app).get('/api/state');
-    expect(Object.keys(res.body.stats)).toHaveLength(5);
-    for (const player of ['Rick', 'Gareth', 'Lachy', 'Miles', 'Scott']) {
+    expect(Object.keys(res.body.stats)).toHaveLength(7);
+    for (const player of ['Rick', 'Gareth', 'Lachy', 'Scott', 'Miles', 'Glenn', 'Grant']) {
       expect(res.body.stats[player].total).toBe(0);
     }
   });
