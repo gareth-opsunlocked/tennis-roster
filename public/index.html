@@ -415,14 +415,91 @@
         ...(a.balls ? [`${a.balls} brought balls`] : []),
         `${a.drinks} brought drinks`,
       ];
+      const playerOptions = w.players.map(p => `<option value="${p}">${p}</option>`).join('');
+      const ballsField = w.ballsWeek ? `
+        <div class="edit-field">
+          <label>Balls</label>
+          <select data-role="balls">${playerOptions}</select>
+        </div>` : '';
+
       return `
-        <div class="history-entry">
-          <div class="h-date">${dateStr} — Week ${w.weekNumber}</div>
-          <div class="h-detail">${parts.join(' · ')}</div>
-          <div class="h-players">${w.players.join(', ')}</div>
+        <div class="history-entry" id="entry-${w.weekNumber}">
+          <div class="h-header">
+            <div>
+              <div class="h-date">${dateStr} — Week ${w.weekNumber}</div>
+              <div class="h-detail">${parts.join(' · ')}</div>
+              <div class="h-players">${w.players.join(', ')}</div>
+            </div>
+            <button class="edit-link" onclick="openEditForm(${w.weekNumber})">Edit</button>
+          </div>
+          <div class="edit-form hidden" id="edit-form-${w.weekNumber}">
+            <div class="edit-field">
+              <label>Paying</label>
+              <select data-role="paying">${playerOptions}</select>
+            </div>
+            ${ballsField}
+            <div class="edit-field">
+              <label>Drinks</label>
+              <select data-role="drinks">${playerOptions}</select>
+            </div>
+            <div class="edit-actions">
+              <button class="save-edit-btn" onclick="saveEdit(${w.weekNumber})">Save</button>
+              <button class="cancel-edit-btn" onclick="closeEditForm(${w.weekNumber})">Cancel</button>
+            </div>
+            <p class="edit-error hidden" id="edit-error-${w.weekNumber}"></p>
+          </div>
         </div>
       `;
     }).join('');
+
+    // Pre-select current values in each form's dropdowns
+    state.weeks.forEach(w => {
+      const form = document.getElementById(`edit-form-${w.weekNumber}`);
+      if (!form) return;
+      form.querySelector('[data-role="paying"]').value = w.assignments.paying;
+      form.querySelector('[data-role="drinks"]').value = w.assignments.drinks;
+      if (w.ballsWeek && w.assignments.balls) {
+        form.querySelector('[data-role="balls"]').value = w.assignments.balls;
+      }
+    });
+  }
+
+  function openEditForm(weekNumber) {
+    document.getElementById(`edit-form-${weekNumber}`).classList.remove('hidden');
+  }
+
+  function closeEditForm(weekNumber) {
+    document.getElementById(`edit-form-${weekNumber}`).classList.add('hidden');
+    document.getElementById(`edit-error-${weekNumber}`).classList.add('hidden');
+  }
+
+  async function saveEdit(weekNumber) {
+    const form = document.getElementById(`edit-form-${weekNumber}`);
+    const errEl = document.getElementById(`edit-error-${weekNumber}`);
+    errEl.classList.add('hidden');
+
+    const paying = form.querySelector('[data-role="paying"]').value;
+    const drinks = form.querySelector('[data-role="drinks"]').value;
+    const ballsSelect = form.querySelector('[data-role="balls"]');
+    const balls = ballsSelect ? ballsSelect.value : null;
+
+    try {
+      const res = await fetch(`/api/week/${weekNumber}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ assignments: { paying, balls, drinks } }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({ error: 'Request failed' }));
+        errEl.textContent = data.error || 'Request failed';
+        errEl.classList.remove('hidden');
+        return;
+      }
+      await loadState();
+    } catch (e) {
+      errEl.textContent = 'Network error — please try again.';
+      errEl.classList.remove('hidden');
+    }
   }
 
   // History toggle
