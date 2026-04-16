@@ -9,24 +9,25 @@
 
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-      background: #f0f4f0;
-      color: #1a2e1a;
+      background: #F5F7FA;
+      color: #1A1A2E;
       min-height: 100vh;
     }
 
     header {
-      background: #2d6a4f;
+      background: #0B3D6E;
       color: white;
       padding: 16px 20px;
     }
-    header h1 { font-size: 1.25rem; font-weight: 700; margin-bottom: 4px; }
+    header h1 { font-size: 1.25rem; font-weight: 800; margin-bottom: 4px; letter-spacing: 0.02em; }
     #week-meta { font-size: 0.85rem; opacity: 0.85; display: flex; gap: 10px; align-items: center; }
     .badge {
-      background: rgba(255,255,255,0.25);
+      background: #C8E34B;
+      color: #1A1A2E;
       padding: 2px 8px;
       border-radius: 20px;
       font-size: 0.75rem;
-      font-weight: 600;
+      font-weight: 700;
     }
 
     main { max-width: 480px; margin: 0 auto; padding: 20px 16px; display: flex; flex-direction: column; gap: 24px; }
@@ -45,14 +46,14 @@
       box-shadow: 0 1px 4px rgba(0,0,0,0.08);
     }
     .role-card .icon { font-size: 1.75rem; margin-bottom: 6px; }
-    .role-card .player { font-weight: 700; font-size: 1rem; color: #2d6a4f; margin-bottom: 2px; }
+    .role-card .player { font-weight: 700; font-size: 1rem; color: #009AC7; margin-bottom: 2px; }
     .role-card .label { font-size: 0.75rem; color: #6c757d; text-transform: uppercase; letter-spacing: 0.04em; }
 
     /* --- Player chips (who's playing) --- */
     #playing-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; }
     .chip {
-      background: #e8f5e9;
-      color: #2d6a4f;
+      background: #E3F4FA;
+      color: #0B3D6E;
       padding: 4px 12px;
       border-radius: 20px;
       font-size: 0.85rem;
@@ -64,15 +65,15 @@
     #set-week-btn {
       width: 100%;
       background: none;
-      border: 2px solid #2d6a4f;
-      color: #2d6a4f;
+      border: 2px solid #009AC7;
+      color: #009AC7;
       padding: 10px;
       border-radius: 8px;
       font-size: 0.9rem;
       font-weight: 600;
       cursor: pointer;
     }
-    #set-week-btn:hover { background: #e8f5e9; }
+    #set-week-btn:hover { background: #E3F4FA; }
 
     #player-select { margin-top: 14px; display: none; }
     #player-select.open { display: block; }
@@ -84,17 +85,17 @@
       font-size: 0.875rem;
       font-weight: 500;
       cursor: pointer;
-      border: 2px solid #2d6a4f;
+      border: 2px solid #009AC7;
       background: white;
-      color: #2d6a4f;
+      color: #009AC7;
       transition: background 0.15s, color 0.15s;
     }
-    .toggle-chip.selected { background: #2d6a4f; color: white; }
+    .toggle-chip.selected { background: #009AC7; color: white; }
     #select-count { font-size: 0.8rem; color: #6c757d; display: block; margin-bottom: 10px; }
 
     #assign-btn {
       width: 100%;
-      background: #2d6a4f;
+      background: #009AC7;
       color: white;
       border: none;
       padding: 10px;
@@ -105,6 +106,21 @@
     }
     #assign-btn:disabled { background: #adb5bd; cursor: not-allowed; }
     #error-msg { color: #dc3545; font-size: 0.85rem; margin-top: 8px; display: none; }
+
+    /* --- Copy button --- */
+    #copy-btn {
+      width: 100%;
+      background: none;
+      border: 2px solid #009AC7;
+      color: #009AC7;
+      padding: 8px;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 12px;
+    }
+    #copy-btn:hover { background: #E3F4FA; }
 
     /* --- No week state --- */
     #no-week {
@@ -117,7 +133,14 @@
     #no-week p { color: #6c757d; margin-bottom: 12px; font-size: 0.9rem; }
 
     /* --- Stats --- */
-    #stats-section h2 { font-size: 1rem; font-weight: 700; margin-bottom: 12px; color: #2d6a4f; }
+    #stats-section h2 {
+      font-size: 0.85rem;
+      font-weight: 800;
+      margin-bottom: 12px;
+      color: #0B3D6E;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
     #stats-cards { display: flex; flex-direction: column; gap: 10px; }
     .stat-card {
       background: white;
@@ -142,16 +165,17 @@
     .badge-drinks { background: #d1e7dd; color: #0f5132; }
 
     /* --- History --- */
-    #history-section h2 { font-size: 1rem; font-weight: 700; margin-bottom: 12px; color: #2d6a4f; }
     #toggle-history {
       background: none;
       border: none;
-      color: #2d6a4f;
+      color: #0B3D6E;
       font-size: 0.875rem;
-      font-weight: 600;
+      font-weight: 700;
       cursor: pointer;
       padding: 0;
       margin-bottom: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
     }
     #history-list { display: none; flex-direction: column; gap: 8px; }
     #history-list.open { display: flex; }
@@ -162,9 +186,48 @@
       font-size: 0.85rem;
       box-shadow: 0 1px 3px rgba(0,0,0,0.06);
     }
-    .history-entry .h-date { font-weight: 700; color: #2d6a4f; margin-bottom: 3px; }
+    .h-header { display: flex; justify-content: space-between; align-items: flex-start; }
+    .history-entry .h-date { font-weight: 700; color: #0B3D6E; margin-bottom: 3px; }
     .history-entry .h-detail { color: #495057; }
     .history-entry .h-players { color: #6c757d; font-size: 0.78rem; margin-top: 3px; }
+
+    /* --- Edit form --- */
+    .edit-link {
+      background: none;
+      border: none;
+      color: #009AC7;
+      font-size: 0.8rem;
+      cursor: pointer;
+      padding: 0;
+      font-weight: 600;
+      flex-shrink: 0;
+      margin-left: 8px;
+    }
+    .edit-form { margin-top: 10px; padding-top: 10px; border-top: 1px solid #e9ecef; }
+    .edit-field { display: flex; flex-direction: column; gap: 3px; margin-bottom: 8px; }
+    .edit-field label { font-size: 0.75rem; color: #6c757d; text-transform: uppercase; letter-spacing: 0.04em; }
+    .edit-field select { padding: 6px 8px; border: 1px solid #dee2e6; border-radius: 6px; font-size: 0.875rem; width: 100%; }
+    .edit-actions { display: flex; gap: 8px; margin-top: 4px; }
+    .save-edit-btn {
+      background: #009AC7;
+      color: white;
+      border: none;
+      padding: 7px 16px;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .cancel-edit-btn {
+      background: none;
+      border: 1px solid #6c757d;
+      color: #6c757d;
+      padding: 7px 16px;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      cursor: pointer;
+    }
+    .edit-error { color: #dc3545; font-size: 0.8rem; margin-top: 6px; }
 
     .hidden { display: none !important; }
   </style>
@@ -187,6 +250,7 @@
     <div id="week-display" class="hidden">
       <div id="role-cards"></div>
       <div id="playing-chips" style="margin-top:14px;"></div>
+      <button id="copy-btn">Copy for text</button>
     </div>
 
     <div id="set-week-area" style="margin-top:12px;">
@@ -262,7 +326,7 @@
     const roles = [
       { key: 'paying', icon: '💰', label: 'Court Hire' },
       ...(w.ballsWeek ? [{ key: 'balls', icon: '🎾', label: 'New Balls' }] : []),
-      { key: 'drinks', icon: '🥤', label: 'Drinks' },
+      { key: 'drinks', icon: '🍺', label: 'Drinks' },
     ];
 
     document.getElementById('role-cards').innerHTML = roles.map(r => `
@@ -292,7 +356,7 @@
         <div class="stat-badges">
           <span class="stat-badge badge-paying">💰 ×${s.paying}</span>
           <span class="stat-badge badge-balls">🎾 ×${s.balls}</span>
-          <span class="stat-badge badge-drinks">🥤 ×${s.drinks}</span>
+          <span class="stat-badge badge-drinks">🍺 ×${s.drinks}</span>
         </div>
       </div>
     `).join('');
