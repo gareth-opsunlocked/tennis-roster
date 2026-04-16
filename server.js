@@ -29,6 +29,22 @@ const pool = process.env.DATABASE_URL
   ? new Pool({ connectionString: process.env.DATABASE_URL, ssl: { rejectUnauthorized: false } })
   : null;
 
+if (pool) {
+  pool.on('error', (err) => {
+    console.error('Idle pool client error:', err);
+  });
+}
+
+async function initDb() {
+  if (!pool) return;
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS roster (
+      id   INTEGER PRIMARY KEY,
+      data JSONB NOT NULL
+    )
+  `);
+}
+
 function getDataFile() {
   return process.env.DATA_FILE || path.join(__dirname, 'data', 'roster.json');
 }
@@ -55,7 +71,7 @@ async function writeData(data) {
   if (pool) {
     await pool.query(
       'INSERT INTO roster (id, data) VALUES (1, $1) ON CONFLICT (id) DO UPDATE SET data = $1',
-      [JSON.stringify(data)]
+      [data]
     );
     return;
   }
@@ -122,5 +138,7 @@ module.exports = { app };
 
 if (require.main === module) {
   const port = process.env.PORT || 3000;
-  app.listen(port, () => console.log(`Server running on http://localhost:${port}`));
+  initDb()
+    .then(() => app.listen(port, () => console.log(`Server running on http://localhost:${port}`)))
+    .catch((err) => { console.error('Failed to initialise DB:', err); process.exit(1); });
 }
