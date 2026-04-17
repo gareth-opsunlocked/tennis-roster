@@ -116,6 +116,13 @@ app.post('/api/week', async (req, res) => {
     }
 
     const { weekNumber, ballsWeek, assignments } = assignDuties(players, data.weeks);
+    const { balls: ballsOverride } = req.body;
+    if (ballsOverride != null) {
+      if (!players.includes(ballsOverride)) {
+        return res.status(400).json({ error: `${ballsOverride} is not playing this week` });
+      }
+      assignments.balls = ballsOverride;
+    }
     const week = {
       date: getNearestThursday(),
       weekNumber,
@@ -165,8 +172,8 @@ app.put('/api/week/:weekNumber', async (req, res) => {
         return res.status(400).json({ error: "balls must be one of this week's players on a balls week" });
       }
     } else {
-      if (balls != null) {
-        return res.status(400).json({ error: 'balls must be null on non-balls weeks' });
+      if (balls != null && !week.players.includes(balls)) {
+        return res.status(400).json({ error: "balls must be one of this week's players" });
       }
     }
 

@@ -1,12 +1,13 @@
 /**
- * Pick the candidate with the fewest turns for `role`.
+ * Pick the candidate with the lowest duty rate (duties / sessions played) for `role`.
  * Breaks ties randomly.
  */
-function pickLowest(role, players, counts, exclude) {
+function pickLowest(role, players, counts, sessions, exclude) {
   const candidates = players.filter(p => !exclude.includes(p));
   if (candidates.length === 0) throw new Error(`No candidates available for role: ${role}`);
-  const min = Math.min(...candidates.map(p => counts[p][role]));
-  const tied = candidates.filter(p => counts[p][role] === min);
+  const rate = p => sessions[p] > 0 ? counts[p][role] / sessions[p] : 0;
+  const min = Math.min(...candidates.map(rate));
+  const tied = candidates.filter(p => rate(p) === min);
   return tied[Math.floor(Math.random() * tied.length)];
 }
 
@@ -18,16 +19,25 @@ function pickLowest(role, players, counts, exclude) {
  */
 function assignDuties(players, weeks) {
   const weekNumber = weeks.length + 1;
-  const ballsWeek = weekNumber % 2 === 1;
+  const lastWeek = weeks[weeks.length - 1];
+  const lastWasBallsWeek = lastWeek
+    ? (lastWeek.ballsWeek ?? lastWeek.assignments.balls != null)
+    : false;
+  const ballsWeek = !lastWasBallsWeek;
 
-  // Initialise counts for this week's players only
+  // Count sessions played and duties done globally for each of this week's players
   const counts = {};
+  const sessions = {};
   for (const p of players) {
     counts[p] = { paying: 0, balls: 0, drinks: 0 };
+    sessions[p] = 0;
   }
 
   for (const week of weeks) {
     const a = week.assignments;
+    for (const p of players) {
+      if (!week.players || week.players.includes(p)) sessions[p]++;
+    }
     if (players.includes(a.paying)) counts[a.paying].paying++;
     if (a.balls && players.includes(a.balls)) counts[a.balls].balls++;
     if (players.includes(a.drinks)) counts[a.drinks].drinks++;
@@ -35,16 +45,16 @@ function assignDuties(players, weeks) {
 
   const exclude = [];
 
-  const paying = pickLowest('paying', players, counts, exclude);
+  const paying = pickLowest('paying', players, counts, sessions, exclude);
   exclude.push(paying);
 
   let balls = null;
   if (ballsWeek) {
-    balls = pickLowest('balls', players, counts, exclude);
+    balls = pickLowest('balls', players, counts, sessions, exclude);
     exclude.push(balls);
   }
 
-  const drinks = pickLowest('drinks', players, counts, exclude);
+  const drinks = pickLowest('drinks', players, counts, sessions, exclude);
 
   return { weekNumber, ballsWeek, assignments: { paying, balls, drinks } };
 }

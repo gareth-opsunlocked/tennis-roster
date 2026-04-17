@@ -191,6 +191,35 @@
     .history-entry .h-detail { color: #495057; }
     .history-entry .h-players { color: #6c757d; font-size: 0.78rem; margin-top: 3px; }
 
+    /* --- Balls warning --- */
+    .balls-warning {
+      background: #fff8e1;
+      border: 1px solid #f5c842;
+      border-radius: 8px;
+      padding: 10px 13px;
+      font-size: 0.82rem;
+      color: #5a4000;
+      margin-top: 8px;
+      line-height: 1.4;
+    }
+    .balls-warning strong { color: #3d2c00; }
+    .balls-pick-chips { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
+    .balls-pick-chip {
+      padding: 4px 12px;
+      border-radius: 20px;
+      border: 1.5px solid #d4a800;
+      background: white;
+      color: #5a4000;
+      font-size: 0.82rem;
+      cursor: pointer;
+    }
+    .balls-pick-chip.selected {
+      background: #f5c842;
+      border-color: #c49a00;
+      font-weight: 700;
+      color: #3d2c00;
+    }
+
     /* --- Edit form --- */
     .edit-link {
       background: none;
@@ -259,6 +288,7 @@
         <p class="select-label" style="margin-top:14px;">Tap to toggle players in/out:</p>
         <div id="toggle-chips"></div>
         <span id="select-count">0 of 4 selected</span>
+        <div id="balls-warning" class="balls-warning hidden"></div>
         <button id="assign-btn" disabled>Assign Duties →</button>
         <p id="error-msg"></p>
       </div>
@@ -305,11 +335,17 @@
     const meta = document.getElementById('week-meta');
     if (!state.currentWeek) { meta.textContent = ''; return; }
     const w = state.currentWeek;
-    const dateStr = new Date(w.date + 'T12:00:00Z').toLocaleDateString('en-AU', { weekday: 'long', day: 'numeric', month: 'long' });
-    meta.innerHTML = `<span>${dateStr}</span><span>Week ${w.weekNumber}</span>${w.ballsWeek ? '<span class="badge">Balls week</span>' : ''}`;
+    meta.innerHTML = `<span>Week ${w.weekNumber}</span>${w.ballsWeek ? '<span class="badge">Balls week</span>' : ''}`;
   }
 
   function renderThisWeek() {
+    const copyBtn = document.getElementById('copy-btn');
+    const staleTA = copyBtn?.nextElementSibling;
+    if (staleTA?.tagName === 'TEXTAREA') {
+      staleTA.remove();
+      copyBtn.textContent = 'Copy for text';
+    }
+
     const noWeek = document.getElementById('no-week');
     const weekDisplay = document.getElementById('week-display');
 
@@ -323,16 +359,28 @@
     weekDisplay.classList.remove('hidden');
 
     const w = state.currentWeek;
+    let ballsTile = null;
+    if (w.ballsWeek) {
+      ballsTile = { icon: '🎾', label: 'New Balls', player: w.assignments.balls };
+    } else {
+      const lastBallsWeek = state.weeks.find(wk => wk.weekNumber !== w.weekNumber && wk.assignments.balls);
+      if (w.assignments.balls) {
+        ballsTile = { icon: '🎾', label: 'New Balls', player: w.assignments.balls };
+      } else if (lastBallsWeek) {
+        ballsTile = { icon: '🎾', label: 'Balls (Week 2)', player: lastBallsWeek.assignments.balls };
+      }
+    }
+
     const roles = [
-      { key: 'paying', icon: '💰', label: 'Court Hire' },
-      ...(w.ballsWeek ? [{ key: 'balls', icon: '🎾', label: 'New Balls' }] : []),
-      { key: 'drinks', icon: '🍺', label: 'Drinks' },
+      { icon: '💰', label: 'Court Hire', player: w.assignments.paying },
+      ...(ballsTile ? [ballsTile] : []),
+      { icon: '🍺', label: 'Drinks', player: w.assignments.drinks },
     ];
 
     document.getElementById('role-cards').innerHTML = roles.map(r => `
       <div class="role-card">
         <div class="icon">${r.icon}</div>
-        <div class="player">${w.assignments[r.key]}</div>
+        <div class="player">${r.player}</div>
         <div class="label">${r.label}</div>
       </div>
     `).join('');
@@ -373,9 +421,11 @@
     if (w.ballsWeek) {
       ballsLine = `🎾 Balls: ${w.assignments.balls} - week 1`;
     } else {
-      const lastBallsWeek = state.weeks.find(wk => wk.assignments.balls !== null);
+      const lastBallsWeek = state.weeks.find(wk => wk.weekNumber !== w.weekNumber && wk.assignments.balls !== null);
       const lastBallsPerson = lastBallsWeek ? lastBallsWeek.assignments.balls : '?';
-      ballsLine = `🎾 Balls: ${lastBallsPerson} - week 2`;
+      ballsLine = w.assignments.balls
+        ? `🎾 Balls: ${w.assignments.balls} - week 1`
+        : `🎾 Balls: ${lastBallsPerson} - week 2`;
     }
 
     return `Tennis ${dayStr} - Week ${w.weekNumber}\n💰 Paying: ${w.assignments.paying}\n${ballsLine}\n🍺 Drinks: ${w.assignments.drinks}`;
@@ -389,14 +439,18 @@
       setTimeout(() => { this.textContent = 'Copy for text'; }, 2000);
     } catch (e) {
       // Fallback for browsers without clipboard API
-      const ta = document.createElement('textarea');
+      let ta = this.nextElementSibling?.tagName === 'TEXTAREA' ? this.nextElementSibling : null;
+      if (!ta) {
+        ta = document.createElement('textarea');
+        ta.style.cssText = 'width:100%;margin-top:8px;font-size:0.85rem;resize:vertical;box-sizing:border-box;';
+        ta.rows = 8;
+        this.insertAdjacentElement('afterend', ta);
+      }
       ta.value = text;
-      ta.style.cssText = 'width:100%;margin-top:8px;font-size:0.85rem;resize:none;';
-      ta.rows = 4;
-      this.insertAdjacentElement('afterend', ta);
       ta.select();
-      this.textContent = 'Select all and copy ↑';
-      this.onclick = null;
+      const ok = document.execCommand('copy');
+      this.textContent = ok ? 'Copied!' : 'Select all and copy ↑';
+      if (ok) setTimeout(() => { this.textContent = 'Copy for text'; }, 2000);
     }
   });
 
@@ -426,7 +480,7 @@
         <div class="history-entry" id="entry-${w.weekNumber}">
           <div class="h-header">
             <div>
-              <div class="h-date">${dateStr} — Week ${w.weekNumber}</div>
+              <div class="h-date">Week ${w.weekNumber}</div>
               <div class="h-detail">${parts.join(' · ')}</div>
               <div class="h-players">${w.players.join(', ')}</div>
             </div>
@@ -512,6 +566,7 @@
   // --- Player selection ---
 
   let selectedPlayers = new Set();
+  let manualBallsPick = null;
 
   function renderToggleChips() {
     const container = document.getElementById('toggle-chips');
@@ -531,6 +586,7 @@
     } else {
       selectedPlayers.add(player);
     }
+    manualBallsPick = null;
     renderToggleChips();
   }
 
@@ -538,6 +594,62 @@
     const n = selectedPlayers.size;
     document.getElementById('select-count').textContent = `${n} of 4 selected`;
     document.getElementById('assign-btn').disabled = n !== 4;
+    updateBallsWarning();
+  }
+
+  function updateBallsWarning() {
+    const el = document.getElementById('balls-warning');
+    const n = selectedPlayers.size;
+
+    if (n !== 4) { el.classList.add('hidden'); return; }
+
+    const lastBallsWeek = state.weeks ? state.weeks.find(w => w.assignments.balls) : null;
+    const lastBallsPerson = lastBallsWeek ? lastBallsWeek.assignments.balls : null;
+    if (!lastBallsPerson || [...selectedPlayers].includes(lastBallsPerson)) {
+      el.classList.add('hidden'); return;
+    }
+
+    const lastWeek = state.weeks ? state.weeks[0] : null;
+    const lastWasBallsWeek = lastWeek ? (lastWeek.ballsWeek ?? lastWeek.assignments.balls != null) : false;
+    const isBallsWeek = !lastWasBallsWeek;
+    const stats = state.stats || {};
+    const suggested = [...selectedPlayers].sort((a, b) => {
+      const ballsDiff = (stats[a]?.balls ?? 0) - (stats[b]?.balls ?? 0);
+      return ballsDiff !== 0 ? ballsDiff : (stats[a]?.total ?? 0) - (stats[b]?.total ?? 0);
+    })[0];
+
+    if (isBallsWeek) {
+      if (!manualBallsPick) manualBallsPick = suggested;
+      const chips = [...selectedPlayers].map(p =>
+        `<button class="balls-pick-chip${manualBallsPick === p ? ' selected' : ''}" onclick="pickBalls('${p}')">${p}${manualBallsPick === p ? ' (suggested)' : ''}</button>`
+      ).join('');
+      el.innerHTML = `🎾 <strong>Balls week</strong> — ${lastBallsPerson} brought balls last time but isn't playing. Who will bring new balls?<div class="balls-pick-chips">${chips}</div>`;
+    } else if (manualBallsPick === 'covered') {
+      el.innerHTML = `🎾 <strong>Balls (Week 2)</strong> — Balls are covered, no reassignment needed.`;
+    } else if (manualBallsPick && manualBallsPick !== 'covered') {
+      const chips = [...selectedPlayers].map(p =>
+        `<button class="balls-pick-chip${manualBallsPick === p ? ' selected' : ''}" onclick="pickBalls('${p}')">${p}${manualBallsPick === p ? ' (suggested)' : ''}</button>`
+      ).join('');
+      el.innerHTML = `🎾 <strong>Balls (Week 2)</strong> — ${lastBallsPerson} isn't playing. Who will bring the balls?<div class="balls-pick-chips">${chips}</div>`;
+    } else {
+      el.innerHTML = `🎾 <strong>Balls (Week 2)</strong> — ${lastBallsPerson} brought balls last week but isn't playing. What's happening with the balls?<div class="balls-pick-chips"><button class="balls-pick-chip" onclick="setBallsCovered()">✓ Somebody already has them</button><button class="balls-pick-chip" onclick="showBallsReassign('${suggested}')">↩ Reassign to somebody else</button></div>`;
+    }
+    el.classList.remove('hidden');
+  }
+
+  function pickBalls(player) {
+    manualBallsPick = player;
+    updateBallsWarning();
+  }
+
+  function setBallsCovered() {
+    manualBallsPick = 'covered';
+    updateBallsWarning();
+  }
+
+  function showBallsReassign(suggested) {
+    manualBallsPick = suggested;
+    updateBallsWarning();
   }
 
   document.getElementById('set-week-btn').addEventListener('click', function () {
@@ -546,6 +658,7 @@
     this.textContent = isOpen ? 'Cancel ✕' : 'Set This Week\'s Players';
     if (isOpen) {
       selectedPlayers = new Set();
+      manualBallsPick = null;
       renderToggleChips();
       document.getElementById('assign-btn').textContent = 'Assign Duties →';
     }
@@ -561,7 +674,7 @@
       const res = await fetch('/api/week', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ players: [...selectedPlayers] }),
+        body: JSON.stringify({ players: [...selectedPlayers], ...(manualBallsPick && manualBallsPick !== 'covered' ? { balls: manualBallsPick } : {}) }),
       });
 
       if (!res.ok) {
