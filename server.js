@@ -82,6 +82,8 @@ const app = express();
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
+app.get('/health', (req, res) => res.send('ok'));
+
 app.get('/api/state', async (req, res) => {
   try {
     const data = await readData();
