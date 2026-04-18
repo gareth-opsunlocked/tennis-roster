@@ -329,6 +329,7 @@
     <div id="week-display" class="hidden">
       <div id="role-cards"></div>
       <div id="playing-chips" style="margin-top:14px;"></div>
+      <div id="current-week-override"></div>
       <div id="session-picker">
         <div class="session-picker-row">
           <span class="session-picker-label">Time</span>
@@ -458,6 +459,43 @@
     document.getElementById('playing-chips').innerHTML =
       '<div style="font-size:0.75rem;color:#6c757d;width:100%;margin-bottom:4px;">PLAYING THIS WEEK</div>' +
       w.players.map(p => `<span class="chip">${p}</span>`).join('');
+
+    const playerOptions = w.players.map(p => `<option value="${p}">${p}</option>`).join('');
+    const ballsField = w.ballsWeek || w.assignments.balls ? `
+      <div class="edit-field">
+        <label>Balls</label>
+        <select data-role="balls">${playerOptions}</select>
+      </div>` : '';
+
+    document.getElementById('current-week-override').innerHTML = `
+      <div class="history-entry" style="margin-top:10px;">
+        <div class="h-header">
+          <div style="font-size:0.8rem;color:#6c757d;">Override this week's duties</div>
+          <button class="edit-link" onclick="openEditForm('current')">Edit</button>
+        </div>
+        <div class="edit-form hidden" id="edit-form-current">
+          <div class="edit-field">
+            <label>Paying</label>
+            <select data-role="paying">${playerOptions}</select>
+          </div>
+          ${ballsField}
+          <div class="edit-field">
+            <label>Drinks</label>
+            <select data-role="drinks">${playerOptions}</select>
+          </div>
+          <div class="edit-actions">
+            <button class="save-edit-btn" onclick="saveEdit(${w.weekNumber}, 'current')">Save</button>
+            <button class="cancel-edit-btn" onclick="closeEditForm('current')">Cancel</button>
+          </div>
+          <p class="edit-error hidden" id="edit-error-current"></p>
+        </div>
+      </div>`;
+
+    const form = document.getElementById('edit-form-current');
+    form.querySelector('[data-role="paying"]').value = w.assignments.paying;
+    form.querySelector('[data-role="drinks"]').value = w.assignments.drinks;
+    const ballsSel = form.querySelector('[data-role="balls"]');
+    if (ballsSel && w.assignments.balls) ballsSel.value = w.assignments.balls;
   }
 
   function renderStats() {
@@ -606,9 +644,10 @@
     document.getElementById(`edit-error-${weekNumber}`).classList.add('hidden');
   }
 
-  async function saveEdit(weekNumber) {
-    const form = document.getElementById(`edit-form-${weekNumber}`);
-    const errEl = document.getElementById(`edit-error-${weekNumber}`);
+  async function saveEdit(weekNumber, formId) {
+    const id = formId ?? weekNumber;
+    const form = document.getElementById(`edit-form-${id}`);
+    const errEl = document.getElementById(`edit-error-${id}`);
     errEl.classList.add('hidden');
 
     const paying = form.querySelector('[data-role="paying"]').value;
