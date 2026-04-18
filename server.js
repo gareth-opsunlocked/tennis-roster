@@ -186,6 +186,18 @@ app.put('/api/week/:weekNumber', async (req, res) => {
   }
 });
 
+app.post('/api/admin/replace', async (req, res) => {
+  try {
+    const { secret, data } = req.body;
+    if (secret !== process.env.ADMIN_SECRET) return res.status(403).json({ error: 'Forbidden' });
+    await writeData(data);
+    res.json({ ok: true, weeks: data.weeks.length });
+  } catch (err) {
+    console.error('Admin replace failed:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 module.exports = { app };
 
 if (require.main === module) {
