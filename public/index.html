@@ -15,12 +15,39 @@
     }
 
     header {
-      background: #0B3D6E;
+      background: linear-gradient(rgba(11,61,110,0.6), rgba(11,61,110,0.6)),
+                  url('banner.png') center 40% / cover no-repeat;
       color: white;
-      padding: 16px 20px;
+      padding: 48px 20px 40px;
+      text-align: center;
+      position: relative;
     }
-    header h1 { font-size: 1.25rem; font-weight: 800; margin-bottom: 4px; letter-spacing: 0.02em; }
-    #week-meta { font-size: 0.85rem; opacity: 0.85; display: flex; gap: 10px; align-items: center; }
+    header h1 {
+      font-size: 1.15rem;
+      font-weight: 800;
+      letter-spacing: 0.02em;
+      color: #F0CC6A;
+      line-height: 1.2;
+      text-shadow: 0 1px 6px rgba(0,0,0,0.7), 0 0 20px rgba(0,0,0,0.4);
+    }
+    header .subtitle {
+      font-size: 0.78rem;
+      color: #F0CC6A;
+      margin-top: 2px;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      text-shadow: 0 1px 4px rgba(0,0,0,0.7);
+    }
+    #week-meta {
+      font-size: 0.78rem;
+      opacity: 0.75;
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      justify-content: center;
+      margin-top: 4px;
+      color: white;
+    }
     .badge {
       background: #C8E34B;
       color: #1A1A2E;
@@ -264,7 +291,8 @@
 <body>
 
 <header>
-  <h1>🎾 Thursday Tennis</h1>
+  <h1>🎾 Thursday Night Tennis Duties Roster</h1>
+  <div class="subtitle">Royal Pines | Gold Coast</div>
   <div id="week-meta"></div>
 </header>
 
