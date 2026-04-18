@@ -187,6 +187,23 @@ app.put('/api/week/:weekNumber', async (req, res) => {
 });
 
 
+app.delete('/api/week/:weekNumber', async (req, res) => {
+  try {
+    const weekNumber = parseInt(req.params.weekNumber, 10);
+    const data = await readData();
+    const last = data.weeks[data.weeks.length - 1];
+    if (!last || last.weekNumber !== weekNumber) {
+      return res.status(400).json({ error: 'Only the most recent week can be deleted' });
+    }
+    data.weeks.pop();
+    await writeData(data);
+    res.json({ ok: true });
+  } catch (err) {
+    console.error('Failed to delete week:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 module.exports = { app };
 
 if (require.main === module) {

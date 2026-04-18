@@ -578,6 +578,8 @@
       return;
     }
 
+    const mostRecentWeekNumber = state.weeks[0]?.weekNumber;
+
     container.innerHTML = state.weeks.map(w => {
       const a = w.assignments;
       const dateStr = new Date(w.date + 'T12:00:00Z').toLocaleDateString('en-AU', { day: 'numeric', month: 'short', year: 'numeric' });
@@ -587,11 +589,12 @@
         `${a.drinks} brought drinks`,
       ];
       const playerOptions = w.players.map(p => `<option value="${p}">${p}</option>`).join('');
-      const ballsField = w.ballsWeek ? `
+      const ballsField = w.ballsWeek || w.assignments.balls ? `
         <div class="edit-field">
           <label>Balls</label>
           <select data-role="balls">${playerOptions}</select>
         </div>` : '';
+      const isLatest = w.weekNumber === mostRecentWeekNumber;
 
       return `
         <div class="history-entry" id="entry-${w.weekNumber}">
@@ -601,7 +604,10 @@
               <div class="h-detail">${parts.join(' · ')}</div>
               <div class="h-players">${w.players.join(', ')}</div>
             </div>
-            <button class="edit-link" onclick="openEditForm(${w.weekNumber})">Edit</button>
+            <div style="display:flex;gap:8px;align-items:center;">
+              <button class="edit-link" onclick="openEditForm(${w.weekNumber})">Edit</button>
+              ${isLatest ? `<button class="edit-link" style="color:#dc3545;" onclick="deleteLatestWeek(${w.weekNumber})">Remove</button>` : ''}
+            </div>
           </div>
           <div class="edit-form hidden" id="edit-form-${w.weekNumber}">
             <div class="edit-field">
@@ -633,6 +639,21 @@
         form.querySelector('[data-role="balls"]').value = w.assignments.balls;
       }
     });
+  }
+
+  async function deleteLatestWeek(weekNumber) {
+    if (!confirm(`Remove Week ${weekNumber}? This cannot be undone.`)) return;
+    try {
+      const res = await fetch(`/api/week/${weekNumber}`, { method: 'DELETE' });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        alert(data.error || 'Failed to remove week');
+        return;
+      }
+      await loadState();
+    } catch (e) {
+      alert('Network error — please try again.');
+    }
   }
 
   function openEditForm(weekNumber) {
