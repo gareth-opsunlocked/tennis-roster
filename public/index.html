@@ -88,7 +88,8 @@
     }
 
     /* --- Set players section --- */
-    #set-week-area { background: white; border-radius: 10px; padding: 16px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
+    #set-week-area { background: white; border-radius: 10px 10px 0 0; padding: 16px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
+    #week-display { background: white; border-radius: 0 0 10px 10px; padding: 16px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); border-top: 1px solid #f0f0f0; }
     #set-week-btn {
       width: 100%;
       background: none;
@@ -247,6 +248,9 @@
       color: #3d2c00;
     }
 
+    /* --- Step labels --- */
+    .step-label { font-size: 0.72rem; font-weight: 700; text-transform: uppercase; color: #6c757d; letter-spacing: 0.06em; margin-bottom: 8px; }
+
     /* --- Session picker --- */
     #session-picker { margin-top: 14px; display: flex; flex-direction: column; gap: 8px; }
     .session-picker-row { display: flex; align-items: center; gap: 10px; }
@@ -326,10 +330,24 @@
       <p>No week set yet. Select who's playing to get started.</p>
     </div>
 
+    <div id="set-week-area">
+      <div class="step-label">1 — Set this week's players</div>
+      <button id="set-week-btn">Set This Week's Players</button>
+      <div id="player-select">
+        <p class="select-label" style="margin-top:14px;">Tap to toggle players in/out:</p>
+        <div id="toggle-chips"></div>
+        <span id="select-count">0 of 4 selected</span>
+        <div id="balls-warning" class="balls-warning hidden"></div>
+        <button id="assign-btn" disabled>Assign Duties →</button>
+        <p id="error-msg"></p>
+      </div>
+    </div>
+
     <div id="week-display" class="hidden">
       <div id="role-cards"></div>
       <div id="playing-chips" style="margin-top:14px;"></div>
       <div id="current-week-override"></div>
+      <div class="step-label" style="margin-top:16px;">2 — Send to the group</div>
       <div id="session-picker">
         <div class="session-picker-row">
           <span class="session-picker-label">Time</span>
@@ -351,18 +369,6 @@
         </div>
       </div>
       <button id="copy-btn">Copy for text</button>
-    </div>
-
-    <div id="set-week-area" style="margin-top:12px;">
-      <button id="set-week-btn">Set This Week's Players</button>
-      <div id="player-select">
-        <p class="select-label" style="margin-top:14px;">Tap to toggle players in/out:</p>
-        <div id="toggle-chips"></div>
-        <span id="select-count">0 of 4 selected</span>
-        <div id="balls-warning" class="balls-warning hidden"></div>
-        <button id="assign-btn" disabled>Assign Duties →</button>
-        <p id="error-msg"></p>
-      </div>
     </div>
   </section>
 
@@ -501,7 +507,7 @@
   function renderStats() {
     const container = document.getElementById('stats-cards');
     const sorted = Object.entries(state.stats)
-      .sort((a, b) => a[1].total - b[1].total);
+      .sort((a, b) => a[0].localeCompare(b[0]));
 
     container.innerHTML = sorted.map(([name, s]) => `
       <div class="stat-card">
