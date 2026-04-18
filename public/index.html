@@ -247,6 +247,28 @@
       color: #3d2c00;
     }
 
+    /* --- Session picker --- */
+    #session-picker { margin-top: 14px; display: flex; flex-direction: column; gap: 8px; }
+    .session-picker-row { display: flex; align-items: center; gap: 10px; }
+    .session-picker-label { font-size: 0.72rem; font-weight: 700; text-transform: uppercase; color: #6c757d; letter-spacing: 0.05em; width: 38px; flex-shrink: 0; }
+    .session-chips { display: flex; gap: 6px; flex-wrap: wrap; }
+    .session-chip {
+      padding: 4px 12px;
+      border-radius: 20px;
+      border: 1.5px solid #d0d6df;
+      background: white;
+      color: #495057;
+      font-size: 0.82rem;
+      cursor: pointer;
+      font-weight: 500;
+    }
+    .session-chip.selected {
+      background: #0B3D6E;
+      border-color: #0B3D6E;
+      color: white;
+      font-weight: 700;
+    }
+
     /* --- Edit form --- */
     .edit-link {
       background: none;
@@ -307,6 +329,26 @@
     <div id="week-display" class="hidden">
       <div id="role-cards"></div>
       <div id="playing-chips" style="margin-top:14px;"></div>
+      <div id="session-picker">
+        <div class="session-picker-row">
+          <span class="session-picker-label">Time</span>
+          <div class="session-chips" id="time-chips">
+            <button class="session-chip" data-value="6:30pm" onclick="pickTime('6:30pm')">6:30pm</button>
+            <button class="session-chip selected" data-value="7pm" onclick="pickTime('7pm')">7pm</button>
+            <button class="session-chip" data-value="7:30pm" onclick="pickTime('7:30pm')">7:30pm</button>
+          </div>
+        </div>
+        <div class="session-picker-row">
+          <span class="session-picker-label">Court</span>
+          <div class="session-chips" id="court-chips">
+            <button class="session-chip" data-value="Ct1" onclick="pickCourt('Ct1')">Ct1</button>
+            <button class="session-chip selected" data-value="Ct2" onclick="pickCourt('Ct2')">Ct2</button>
+            <button class="session-chip" data-value="Ct3" onclick="pickCourt('Ct3')">Ct3</button>
+            <button class="session-chip" data-value="Ct4" onclick="pickCourt('Ct4')">Ct4</button>
+            <button class="session-chip" data-value="Ct5" onclick="pickCourt('Ct5')">Ct5</button>
+          </div>
+        </div>
+      </div>
       <button id="copy-btn">Copy for text</button>
     </div>
 
@@ -438,12 +480,21 @@
     `).join('');
   }
 
+  let selectedTime = '7pm';
+  let selectedCourt = 'Ct2';
+
+  function pickTime(val) {
+    selectedTime = val;
+    document.querySelectorAll('#time-chips .session-chip').forEach(b => b.classList.toggle('selected', b.dataset.value === val));
+  }
+
+  function pickCourt(val) {
+    selectedCourt = val;
+    document.querySelectorAll('#court-chips .session-chip').forEach(b => b.classList.toggle('selected', b.dataset.value === val));
+  }
+
   function formatCopyText() {
     const w = state.currentWeek;
-    const d = new Date(w.date + 'T12:00:00Z');
-    const dayNames = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
-    const monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-    const dayStr = `${dayNames[d.getUTCDay()]} ${d.getUTCDate()} ${monthNames[d.getUTCMonth()]}`;
 
     let ballsLine;
     if (w.ballsWeek) {
@@ -456,7 +507,7 @@
         : `🎾 Balls: ${lastBallsPerson} - week 2`;
     }
 
-    return `Tennis ${dayStr} - Week ${w.weekNumber}\n💰 Paying: ${w.assignments.paying}\n${ballsLine}\n🍺 Drinks: ${w.assignments.drinks}`;
+    return `Tennis tonight ${selectedTime} ${selectedCourt}\n💰 Paying: ${w.assignments.paying}\n${ballsLine}\n🍺 Drinks: ${w.assignments.drinks}`;
   }
 
   document.getElementById('copy-btn').addEventListener('click', async function () {
