@@ -762,19 +762,17 @@
     const lastWeek = state.weeks ? state.weeks[0] : null;
     const lastWasBallsWeek = lastWeek ? (lastWeek.ballsWeek ?? lastWeek.assignments.balls != null) : false;
     const isBallsWeek = !lastWasBallsWeek;
+
+    // On a new balls week the algorithm picks a fresh balls person automatically — no warning needed
+    if (isBallsWeek) { el.classList.add('hidden'); return; }
+
     const stats = state.stats || {};
     const suggested = [...selectedPlayers].sort((a, b) => {
       const ballsDiff = (stats[a]?.balls ?? 0) - (stats[b]?.balls ?? 0);
       return ballsDiff !== 0 ? ballsDiff : (stats[a]?.total ?? 0) - (stats[b]?.total ?? 0);
     })[0];
 
-    if (isBallsWeek) {
-      if (!manualBallsPick) manualBallsPick = suggested;
-      const chips = [...selectedPlayers].map(p =>
-        `<button class="balls-pick-chip${manualBallsPick === p ? ' selected' : ''}" onclick="pickBalls('${p}')">${p}${manualBallsPick === p ? ' (suggested)' : ''}</button>`
-      ).join('');
-      el.innerHTML = `🎾 <strong>Balls week</strong> — ${lastBallsPerson} brought balls last time but isn't playing. Who will bring new balls?<div class="balls-pick-chips">${chips}</div>`;
-    } else if (manualBallsPick === 'covered') {
+    if (manualBallsPick === 'covered') {
       el.innerHTML = `🎾 <strong>Balls (Week 2)</strong> — Balls are covered, no reassignment needed.`;
     } else if (manualBallsPick && manualBallsPick !== 'covered') {
       const chips = [...selectedPlayers].map(p =>
