@@ -244,6 +244,7 @@ All three values displayed at all times during reconciliation. Period cannot be 
 | Owner Statements | Individual statement per owner for any period — shows all debits, credits, opening and closing balance |
 | GST Summary | Taxable vs exempt transactions grouped for BAS preparation |
 | ABA File History | All ABA files generated, with status and line detail |
+| Letting Pool Summary | Per pool/class: total revenue, management fees, each owner's entitlement %, gross share, net share — for audit evidence |
 | Audit Trail Export | Full audit log for any period, exportable as CSV |
 
 ### 5.6 Audit Trail
@@ -379,6 +380,7 @@ Pre-seeded for the demo:
 - 1 developer guarantee (2 properties in a new development, guarantee active)
 - 2 owner advances (1 recovered, 1 outstanding)
 - 1 ABA file generated (demonstrating batch payment)
+- 1 letting pool (class-based: 3 x 1BR units and 2 x 2BR units, 6 months of distributions, finalised and locked)
 - Full audit trail history for all seeded activity
 
 ---
@@ -395,18 +397,82 @@ When a reconciliation period is locked:
 
 ---
 
-## 14. Pooled Accounting Arrangement
+## 14. Trust Account Arrangements
 
-Standard QLD practice — one trust account holds all client funds; individual owner ledgers maintain separation.
+### 14a. Standard Arrangement (default)
 
-Documented in agency settings:
-- Pooled arrangement name, establishment date, authorising document reference (for audit evidence)
+One trust account holds all client funds; individual owner ledgers track each owner's specific property revenue. This is the standard QLD practice and the default for all agencies.
 
 Enforced invariant on every transaction:
 ```
 Trust Account Balance = Sum of All Owner Ledger Balances + Unrecognised Trust Receipts
 ```
 Any discrepancy triggers a system alert and blocks further writes until resolved.
+
+---
+
+### 14b. Letting Pool Arrangement (optional, niche)
+
+A distinct arrangement used in some management rights and strata accommodation buildings where owners agree to share revenue across a pool of units rather than each owner receiving only their specific unit's income. Niche and older practice, but still in use and must be fully supported.
+
+**Two pool types:**
+
+- **Whole-building pool** — all units in the building contribute booking revenue to a single pool. Each owner receives a percentage share of total pool revenue based on their entitlement.
+- **Class-based pool** — units grouped by type (e.g. "1 Bedroom", "2 Bedroom"). Revenue from 1BR bookings distributed only among 1BR owners; revenue from 2BR bookings among 2BR owners. Each class has its own entitlement schedule and distributes independently.
+
+**How it differs from the standard arrangement:**
+
+In a letting pool, booking receipts flow to the pool — not directly to the specific unit's owner ledger. The owner's ledger balance does not move when their unit is booked. It moves when the pool runs its distribution at period end (typically monthly). This changes:
+
+- **Available balance for disbursement** — determined by distribution date, not booking date
+- **Revenue recognition** — pool period end, not check-in/out date
+- **Owner statements** — show pool share received, not individual booking revenue
+- **Trial balance** — pool undistributed balance is a reconciling item until distributed
+
+**Data model additions:**
+
+**LettingPool**
+- `id`, `name`, `buildingName`, `type` (WHOLE_BUILDING | CLASS_BASED)
+- `distributionFrequency` (MONTHLY | WEEKLY), `managementFeeRate`
+- `establishedDate`, `authorisationDocumentReference` (for audit)
+- `status` (ACTIVE | INACTIVE)
+
+**LettingPoolClass** (for CLASS_BASED pools only)
+- `id`, `poolId`, `className` (e.g. "1 Bedroom", "2 Bedroom")
+- `revenuePercentageOfTotal` — what % of total building revenue this class receives (must sum to 100%)
+
+**LettingPoolMembership**
+- `id`, `poolId`, `classId` (nullable — null for WHOLE_BUILDING), `propertyId`, `ownerId`
+- `entitlementPercentage` — this owner's % share within their pool or class (all memberships in a pool/class must sum to 100%)
+- `effectiveFrom`, `effectiveTo` (nullable) — entitlements can change over time
+
+**LettingPoolDistribution** (run at period end)
+- `id`, `poolId`, `classId` (nullable), `period` (YYYY-MM)
+- `totalPoolRevenue` — sum of all receipts in the pool/class for the period
+- `managementFeeTotal`, `netDistributableAmount`
+- `status` (DRAFT | FINALISED | LOCKED)
+- `finalisedAt`, `finalisedBy`
+
+**LettingPoolDistributionLine** (one per member per distribution)
+- `id`, `distributionId`, `ownerId`, `propertyId`
+- `entitlementPercentage` (snapshot at distribution time — preserved for audit)
+- `grossShare`, `managementFeeDeducted`, `netShare`
+- Links to the `OwnerLedgerEntry` created when this line is posted
+
+**Process — period end distribution:**
+1. Property manager initiates "Run Pool Distribution" for a period
+2. System calculates total receipts in the pool/class for the period
+3. Deducts management fees
+4. Calculates each member's net share based on their entitlement percentage
+5. Presents a DRAFT distribution for review — property manager can inspect each owner's share before finalising
+6. On finalise: system creates an `OwnerLedgerEntry` credit for each member, linking back to the distribution line
+7. Distribution locked — entries become part of the standard trust account record and flow into reconciliation and reports normally
+
+**Audit considerations:**
+- Entitlement percentages are snapshotted at distribution time — a change to an entitlement after the fact does not alter historical distributions
+- Every distribution run is recorded in the audit log with before/after for each owner's credit
+- Pool summary report: total pool revenue, management fees, each owner's entitlement %, gross share, net share — required for audit evidence of the pooled arrangement
+- Letting pool agreement reference stored against the pool record for auditor access
 
 ---
 
