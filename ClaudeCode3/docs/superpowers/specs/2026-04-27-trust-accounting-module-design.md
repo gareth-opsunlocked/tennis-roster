@@ -6,17 +6,32 @@
 
 ## 1. Overview
 
-A standalone, cloud-hosted SaaS web application that provides Queensland-compliant trust accounting for property managers and accommodation providers. PMS-agnostic — it does not integrate with any specific Property Management System. Data is entered manually or seeded via realistic dummy data for demonstration purposes.
+A standalone, cloud-hosted SaaS web application that provides Queensland-compliant trust accounting for property managers and accommodation providers. **PMS-agnostic** means it can plug into any Property Management System via an adapter pattern — agencies keep their existing PMS and add this as a dedicated, auditor-grade trust accounting layer on top. Data flows in from a connected PMS automatically, with manual entry as a fallback.
 
 **Primary goals:**
 - Demonstrate end-to-end trust accounting flows convincingly to investors and potential clients
 - Pass scrutiny from a QLD trust account auditor — every compliance requirement is enforced at the system level, not just the UI level
+- Prove the adapter pattern works by shipping at least one real PMS integration alongside the core module
 
 **Out of scope for PoC:**
-- PMS API integrations
 - Owner portal (self-service owner login)
 - Multi-tenancy (single agency for PoC)
 - Mobile app
+- Live bank feeds (CSV import is the PoC approach; Open Banking via Basiq/Frollo is the roadmap item to match Resly)
+
+---
+
+## 1a. Competitive Context
+
+All major QLD competitors (Resly, HiRUM, REI Master) require the agency to adopt their full PMS stack. Trust accounting is a module inside their closed ecosystem — agencies cannot use it without switching everything.
+
+| Platform | Strength | Weakness |
+|----------|----------|----------|
+| **Resly** | Live bank feeds (30+ banks), short stay / management rights focus, QLD-based | Short stay only, closed ecosystem, no open API |
+| **HiRUM** | Long-established, 1,200+ properties, solid 3-way reconciliation | On-premise installs still common, no open API, agencies locked in |
+| **REI Master** | Widest property type coverage (permanent, holiday, commercial, management rights) | Closed ecosystem, older tech stack, no open API |
+
+**Our differentiation:** The only system that works alongside any PMS as a dedicated trust accounting layer. Agencies do not need to change how they work — they connect their existing PMS and gain a compliance and audit layer that none of the above can offer to non-customers.
 
 ---
 
@@ -402,7 +417,71 @@ Any discrepancy triggers a system alert and blocks further writes until resolved
 
 ---
 
-## 16. Implementation Notes
+## 16. PMS Integration Architecture
+
+### Adapter Pattern
+
+Each PMS integration is a self-contained adapter that implements a standard interface. Adding a new PMS means writing a new adapter — the trust accounting core is never modified.
+
+```
+PMS (Resly / HiRUM / REI Master / Console Cloud / PropertyMe / etc.)
+        ↓  (webhook push OR scheduled pull)
+  PMS Adapter Layer  ←— one adapter per PMS, maps PMS concepts → internal format
+        ↓
+  Ingestion API  (tRPC, authenticated via API key per agency)
+        ↓
+  Trust Accounting Core  (unchanged regardless of PMS)
+```
+
+### Standard Adapter Interface
+
+Every adapter must map its PMS data to these internal events:
+
+| Internal Event | PMS Equivalent |
+|---------------|----------------|
+| `receipt.created` | Payment received / booking deposit |
+| `booking.confirmed` | Reservation confirmed (short stay) |
+| `booking.checkedIn` | Guest check-in |
+| `booking.checkedOut` | Guest check-out |
+| `booking.cancelled` | Cancellation |
+| `tenant.created` | New tenancy (residential) |
+| `rent.received` | Rent payment |
+| `maintenance.invoice` | Maintenance job completed |
+
+### Ingestion API
+
+Each agency gets an API key. The ingestion endpoint is:
+```
+POST /api/ingest/{agencyId}
+Authorization: Bearer {apiKey}
+Content-Type: application/json
+{ "event": "receipt.created", "data": { ... }, "source": "resly" }
+```
+
+The adapter normalises PMS-specific payloads into this format before posting. Duplicate events are idempotent (same external reference ID = no duplicate receipt created).
+
+### PoC Reference Integration: Resly
+
+Resly is the priority first integration — Queensland-based, short-stay focused, modern API, and the closest competitor. The Resly adapter will:
+- Consume Resly webhooks for booking events (confirmed, checked-in, checked-out, cancelled)
+- Map Resly booking/payment data to trust receipts and bookings in our system
+- Demonstrate end-to-end: booking made in Resly → automatically receipted in trust account → appears in owner ledger on recognition date
+
+### Integration Targets (Roadmap Order)
+
+1. **Resly** — PoC reference integration (short stay / management rights)
+2. **Console Cloud** — largest residential PMS market share in QLD
+3. **PropertyMe** — second largest residential QLD
+4. **REI Master / REI Cloud** — management rights and commercial
+5. **HiRUM** — holiday letting legacy base
+
+### Manual Entry Fallback
+
+Agencies without a supported PMS use the full manual entry UI. No functionality is reduced — the adapter layer simply auto-creates records that would otherwise be entered by hand.
+
+---
+
+## 17. Implementation Notes
 
 - Monetary values stored as integers (cents) throughout — no floating point arithmetic anywhere near money
 - All timestamps stored as UTC; displayed in AEST/AEDT per user's locale
