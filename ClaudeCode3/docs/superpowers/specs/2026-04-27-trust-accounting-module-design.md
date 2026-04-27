@@ -81,7 +81,7 @@ Three roles with strictly enforced permissions:
 **TrustAccount**
 - `id`, `bankName`, `bsb`, `accountNumber`, `accountName`
 - `apcaUserId` — for ABA file generation (assigned by bank)
-- `currentBalance` — computed from all posted transactions
+- `currentBalance` — always derived at query time (sum of all CLEARED receipts minus sum of all PROCESSED disbursements); never stored as a column to prevent drift
 
 **TrustReceipt** (money IN to trust account)
 - `id`, `receiptNumber` (sequential, never reused), `date`, `amount`
@@ -103,7 +103,7 @@ Three roles with strictly enforced permissions:
 - `gstTreatment`: INCLUSIVE | EXCLUSIVE | EXEMPT
 - `gstAmount` (computed)
 - `authorisedBy` (userId)
-- `status`: PENDING_EFT | PROCESSED | REVERSED
+- `status`: PENDING_EFT | IN_ABA_FILE | PROCESSED | REVERSED
 - `abaFileId` (FK → ABAFile, nullable)
 - `inTransit` (boolean) — true until matched in bank reconciliation
 
