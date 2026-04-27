@@ -30,8 +30,11 @@ All major QLD competitors (Resly, HiRUM, REI Master) require the agency to adopt
 | **Resly** | Live bank feeds (30+ banks), short stay / management rights focus, QLD-based | Short stay only, closed ecosystem, no open API |
 | **HiRUM** | Long-established, 1,200+ properties, solid 3-way reconciliation | On-premise installs still common, no open API, agencies locked in |
 | **REI Master** | Widest property type coverage (permanent, holiday, commercial, management rights) | Closed ecosystem, older tech stack, no open API |
+| **Guesty** | Global platform, launched AU/NZ trust accounting March 2026, developed with a leading AU audit firm | Short-stay only, closed ecosystem, trust accounting only works if you're a Guesty customer |
 
-**Our differentiation:** The only system that works alongside any PMS as a dedicated trust accounting layer. Agencies do not need to change how they work — they connect their existing PMS and gain a compliance and audit layer that none of the above can offer to non-customers.
+**Market signal:** Guesty's March 2026 launch confirms that QLD trust accounting compliance is a serious, unsolved problem that global players are now investing in. Every solution in market requires the agency to adopt the full PMS stack — trust accounting is the hook, not a standalone module.
+
+**Our differentiation:** The only standalone, PMS-agnostic trust accounting module. Agencies keep their existing PMS — Resly, HiRUM, REI Master, Guesty, Console Cloud, PropertyMe, or anything else — and plug our module in for compliance. If they ever switch PMS, their trust accounting history stays intact. These platforms are not our competitors; they are our integration targets and our sales channel.
 
 ---
 
@@ -469,11 +472,12 @@ Resly is the priority first integration — Queensland-based, short-stay focused
 
 ### Integration Targets (Roadmap Order)
 
-1. **Resly** — PoC reference integration (short stay / management rights)
+1. **Resly** — PoC reference integration (short stay / management rights, QLD-based, modern API)
 2. **Console Cloud** — largest residential PMS market share in QLD
 3. **PropertyMe** — second largest residential QLD
-4. **REI Master / REI Cloud** — management rights and commercial
-5. **HiRUM** — holiday letting legacy base
+4. **Guesty** — global short-stay platform, strong AU growth post March 2026 launch
+5. **REI Master / REI Cloud** — management rights and commercial
+6. **HiRUM** — holiday letting legacy base
 
 ### Manual Entry Fallback
 
