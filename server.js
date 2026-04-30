@@ -5,21 +5,21 @@ const { Pool } = require('pg');
 const { assignDuties, computeStats, getNearestThursday } = require('./algorithm');
 
 const DEFAULT_DATA = {
-  players: ['Rick', 'Gareth', 'Lachy', 'Scott', 'Miles', 'Glenn', 'Grant'],
+  players: ['Rick', 'Gareth', 'Lachy', 'Scott', 'Miles', 'Glen', 'Grant'],
   weeks: [],
 };
 
 const SEED_DATA = {
-  players: ['Rick', 'Gareth', 'Lachy', 'Scott', 'Miles', 'Glenn', 'Grant'],
+  players: ['Rick', 'Gareth', 'Lachy', 'Scott', 'Miles', 'Glen', 'Grant'],
   weeks: [
     { date: '2026-01-01', weekNumber: 1,  ballsWeek: true,  players: ['Rick','Grant','Scott','Gareth'],  assignments: { paying: 'Rick',   balls: 'Scott',  drinks: 'Gareth' } },
     { date: '2026-01-08', weekNumber: 2,  ballsWeek: false, players: ['Scott','Gareth','Lachy','Rick'],  assignments: { paying: 'Scott',  balls: null,     drinks: 'Rick'   } },
-    { date: '2026-01-15', weekNumber: 3,  ballsWeek: true,  players: ['Miles','Rick','Scott','Glenn'],   assignments: { paying: 'Miles',  balls: 'Glenn',  drinks: 'Glenn'  } },
-    { date: '2026-01-22', weekNumber: 4,  ballsWeek: false, players: ['Gareth','Glenn','Rick','Scott'],  assignments: { paying: 'Gareth', balls: null,     drinks: 'Scott'  } },
-    { date: '2026-01-29', weekNumber: 5,  ballsWeek: true,  players: ['Glenn','Gareth','Scott','Rick'],  assignments: { paying: 'Glenn',  balls: 'Rick',   drinks: 'Rick'   } },
-    { date: '2026-02-05', weekNumber: 6,  ballsWeek: false, players: ['Scott','Rick','Glenn','Gareth'],  assignments: { paying: 'Scott',  balls: null,     drinks: 'Gareth' } },
-    { date: '2026-02-12', weekNumber: 7,  ballsWeek: true,  players: ['Rick','Scott','Gareth','Glenn'],  assignments: { paying: 'Rick',   balls: 'Gareth', drinks: 'Glenn'  } },
-    { date: '2026-02-19', weekNumber: 8,  ballsWeek: false, players: ['Scott','Rick','Gareth','Glenn'],  assignments: { paying: 'Scott',  balls: null,     drinks: 'Glenn'  } },
+    { date: '2026-01-15', weekNumber: 3,  ballsWeek: true,  players: ['Miles','Rick','Scott','Glen'],   assignments: { paying: 'Miles',  balls: 'Glen',  drinks: 'Glen'  } },
+    { date: '2026-01-22', weekNumber: 4,  ballsWeek: false, players: ['Gareth','Glen','Rick','Scott'],  assignments: { paying: 'Gareth', balls: null,     drinks: 'Scott'  } },
+    { date: '2026-01-29', weekNumber: 5,  ballsWeek: true,  players: ['Glen','Gareth','Scott','Rick'],  assignments: { paying: 'Glen',  balls: 'Rick',   drinks: 'Rick'   } },
+    { date: '2026-02-05', weekNumber: 6,  ballsWeek: false, players: ['Scott','Rick','Glen','Gareth'],  assignments: { paying: 'Scott',  balls: null,     drinks: 'Gareth' } },
+    { date: '2026-02-12', weekNumber: 7,  ballsWeek: true,  players: ['Rick','Scott','Gareth','Glen'],  assignments: { paying: 'Rick',   balls: 'Gareth', drinks: 'Glen'  } },
+    { date: '2026-02-19', weekNumber: 8,  ballsWeek: false, players: ['Scott','Rick','Gareth','Glen'],  assignments: { paying: 'Scott',  balls: null,     drinks: 'Glen'  } },
     { date: '2026-02-26', weekNumber: 9,  ballsWeek: true,  players: ['Rick','Scott','Lachy','Gareth'],  assignments: { paying: 'Rick',   balls: 'Scott',  drinks: 'Gareth' } },
     { date: '2026-03-05', weekNumber: 10, ballsWeek: false, players: ['Gareth','Rick','Lachy','Scott'],  assignments: { paying: 'Gareth', balls: null,     drinks: 'Scott'  } },
   ],
@@ -202,6 +202,18 @@ app.delete('/api/week/:weekNumber', async (req, res) => {
     res.json({ ok: true });
   } catch (err) {
     console.error('Failed to delete week:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+app.post('/api/admin/replace', async (req, res) => {
+  if (req.headers['x-admin-secret'] !== process.env.ADMIN_SECRET) {
+    return res.status(403).json({ error: 'Forbidden' });
+  }
+  try {
+    await writeData(req.body);
+    res.json({ ok: true });
+  } catch (err) {
     res.status(500).json({ error: 'Internal server error' });
   }
 });
