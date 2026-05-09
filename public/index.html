@@ -556,7 +556,12 @@
         : `🎾 Balls: ${lastBallsPerson} - week 2`;
     }
 
-    return `Tennis tonight ${selectedTime} ${selectedCourt}\n${w.players.join(', ')}\n💰 Paying: ${w.assignments.paying}\n${ballsLine}\n🍺 Drinks: ${w.assignments.drinks}`;
+    const paying = w.assignments.paying;
+    const drinks = w.assignments.drinks;
+    const others = w.players.filter(p => p !== paying && p !== drinks);
+    const orderedPlayers = [paying, ...others, drinks];
+
+    return `Tennis tonight ${selectedTime} ${selectedCourt}\n${orderedPlayers.join(', ')}\n💰 Paying: ${w.assignments.paying}\n${ballsLine}\n🍺 Drinks: ${w.assignments.drinks}`;
   }
 
   document.getElementById('copy-btn').addEventListener('click', async function () {
