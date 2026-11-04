@@ -472,11 +472,7 @@
       w.players.map(p => `<span class="chip">${p}</span>`).join('');
 
     const playerOptions = w.players.map(p => `<option value="${p}">${p}</option>`).join('');
-    const ballsField = w.ballsWeek || w.assignments.balls ? `
-      <div class="edit-field">
-        <label>Balls</label>
-        <select data-role="balls">${playerOptions}</select>
-      </div>` : '';
+    const ballsField = ballsFieldHtml(w, playerOptions);
 
     document.getElementById('current-week-override').innerHTML = `
       <div class="history-entry" style="margin-top:10px;">
@@ -505,8 +501,16 @@
     const form = document.getElementById('edit-form-current');
     form.querySelector('[data-role="paying"]').value = w.assignments.paying;
     form.querySelector('[data-role="drinks"]').value = w.assignments.drinks;
-    const ballsSel = form.querySelector('[data-role="balls"]');
-    if (ballsSel && w.assignments.balls) ballsSel.value = w.assignments.balls;
+    form.querySelector('[data-role="balls"]').value = w.assignments.balls ?? '';
+  }
+
+  function ballsFieldHtml(w, playerOptions) {
+    const reuseOption = w.ballsWeek ? '' : `<option value="">Reused last week's balls</option>`;
+    return `
+      <div class="edit-field">
+        <label>${w.ballsWeek ? 'Balls' : 'New tin opened by'}</label>
+        <select data-role="balls">${reuseOption}${playerOptions}</select>
+      </div>`;
   }
 
   function renderStats() {
@@ -605,11 +609,7 @@
         `${a.drinks} brought drinks`,
       ];
       const playerOptions = w.players.map(p => `<option value="${p}">${p}</option>`).join('');
-      const ballsField = w.ballsWeek || w.assignments.balls ? `
-        <div class="edit-field">
-          <label>Balls</label>
-          <select data-role="balls">${playerOptions}</select>
-        </div>` : '';
+      const ballsField = ballsFieldHtml(w, playerOptions);
       const isLatest = w.weekNumber === mostRecentWeekNumber;
 
       return `
@@ -651,9 +651,7 @@
       if (!form) return;
       form.querySelector('[data-role="paying"]').value = w.assignments.paying;
       form.querySelector('[data-role="drinks"]').value = w.assignments.drinks;
-      if (w.ballsWeek && w.assignments.balls) {
-        form.querySelector('[data-role="balls"]').value = w.assignments.balls;
-      }
+      form.querySelector('[data-role="balls"]').value = w.assignments.balls ?? '';
     });
   }
 
@@ -689,8 +687,7 @@
 
     const paying = form.querySelector('[data-role="paying"]').value;
     const drinks = form.querySelector('[data-role="drinks"]').value;
-    const ballsSelect = form.querySelector('[data-role="balls"]');
-    const balls = ballsSelect ? ballsSelect.value : null;
+    const balls = form.querySelector('[data-role="balls"]').value || null;
 
     try {
       const res = await fetch(`/api/week/${weekNumber}`, {
