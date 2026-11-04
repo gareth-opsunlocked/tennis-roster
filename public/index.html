@@ -565,7 +565,7 @@
     const others = w.players.filter(p => p !== paying && p !== drinks);
     const orderedPlayers = [paying, ...others, drinks];
 
-    return `Tennis tonight ${selectedTime} ${selectedCourt}\n${orderedPlayers.join(', ')}\n💰 Paying: ${w.assignments.paying}\n${ballsLine}\n🍺 Drinks: ${w.assignments.drinks}`;
+    return `Tennis this week ${selectedTime} ${selectedCourt}\n${orderedPlayers.join(', ')}\n💰 Paying: ${w.assignments.paying}\n${ballsLine}\n🍺 Drinks: ${w.assignments.drinks}`;
   }
 
   document.getElementById('copy-btn').addEventListener('click', async function () {
