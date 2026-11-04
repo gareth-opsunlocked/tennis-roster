@@ -17,13 +17,21 @@ function pickLowest(role, players, counts, sessions, exclude) {
  * `assignments.balls` is null on non-balls weeks.
  * The 4th player (no duty) does not appear in assignments.
  */
-function assignDuties(players, weeks) {
+const MAX_DAYS_TO_REUSE_BALLS = 10;
+
+function daysBetween(from, to) {
+  return (Date.parse(to) - Date.parse(from)) / 86400000;
+}
+
+function assignDuties(players, weeks, date) {
   const weekNumber = weeks.length + 1;
   const lastWeek = weeks[weeks.length - 1];
   const lastWasBallsWeek = lastWeek
-    ? (lastWeek.ballsWeek ?? lastWeek.assignments.balls != null)
+    ? (lastWeek.ballsWeek || lastWeek.assignments.balls != null)
     : false;
-  const ballsWeek = !lastWasBallsWeek;
+  const skippedWeek = Boolean(lastWeek?.date && date)
+    && daysBetween(lastWeek.date, date) > MAX_DAYS_TO_REUSE_BALLS;
+  const ballsWeek = !lastWasBallsWeek || skippedWeek;
 
   // Count sessions played and duties done globally for each of this week's players
   const counts = {};

@@ -117,7 +117,8 @@ app.post('/api/week', async (req, res) => {
       }
     }
 
-    const { weekNumber, ballsWeek, assignments } = assignDuties(players, data.weeks);
+    const date = getNearestThursday();
+    const { weekNumber, ballsWeek, assignments } = assignDuties(players, data.weeks, date);
     const { balls: ballsOverride } = req.body;
     if (ballsOverride != null) {
       if (!players.includes(ballsOverride)) {
@@ -126,7 +127,7 @@ app.post('/api/week', async (req, res) => {
       assignments.balls = ballsOverride;
     }
     const week = {
-      date: getNearestThursday(),
+      date,
       weekNumber,
       ballsWeek,
       players,

@@ -17,7 +17,7 @@ describe('GET /api/state', () => {
   test('returns 200 with empty weeks and null currentWeek on first run', async () => {
     const res = await request(app).get('/api/state');
     expect(res.status).toBe(200);
-    expect(res.body.players).toEqual(['Rick', 'Gareth', 'Lachy', 'Scott', 'Miles', 'Glenn', 'Grant']);
+    expect(res.body.players).toEqual(['Rick', 'Gareth', 'Lachy', 'Scott', 'Miles', 'Glen', 'Grant']);
     expect(res.body.weeks).toEqual([]);
     expect(res.body.currentWeek).toBeNull();
   });
@@ -25,7 +25,7 @@ describe('GET /api/state', () => {
   test('stats contains all 7 players with zero totals on first run', async () => {
     const res = await request(app).get('/api/state');
     expect(Object.keys(res.body.stats)).toHaveLength(7);
-    for (const player of ['Rick', 'Gareth', 'Lachy', 'Scott', 'Miles', 'Glenn', 'Grant']) {
+    for (const player of ['Rick', 'Gareth', 'Lachy', 'Scott', 'Miles', 'Glen', 'Grant']) {
       expect(res.body.stats[player].total).toBe(0);
     }
   });
@@ -131,13 +131,24 @@ describe('PUT /api/week/:weekNumber', () => {
     expect(res.status).toBe(400);
   });
 
-  test('returns 400 when balls assigned on a non-balls week', async () => {
+  test('records a new tin opened on a week 2', async () => {
     await request(app)
       .post('/api/week')
       .send({ players: ['Rick', 'Gareth', 'Lachy', 'Scott'] });
     const res = await request(app)
       .put('/api/week/2')
       .send({ assignments: { paying: 'Rick', balls: 'Gareth', drinks: 'Lachy' } });
+    expect(res.status).toBe(200);
+    expect(res.body.assignments.balls).toBe('Gareth');
+  });
+
+  test('returns 400 when balls assigned to someone not playing on a week 2', async () => {
+    await request(app)
+      .post('/api/week')
+      .send({ players: ['Rick', 'Gareth', 'Lachy', 'Scott'] });
+    const res = await request(app)
+      .put('/api/week/2')
+      .send({ assignments: { paying: 'Rick', balls: 'Miles', drinks: 'Lachy' } });
     expect(res.status).toBe(400);
   });
 

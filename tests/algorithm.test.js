@@ -27,6 +27,45 @@ describe('assignDuties', () => {
     expect(result.ballsWeek).toBe(true);
   });
 
+  test('week 2 balls are reused when the last game was 7 days ago', () => {
+    const history = [{ date: '2026-11-05', assignments: { paying: 'Rick', balls: 'Gareth', drinks: 'Lachy' } }];
+    const result = assignDuties(PLAYERS, history, '2026-11-12');
+    expect(result.ballsWeek).toBe(false);
+    expect(result.assignments.balls).toBeNull();
+  });
+
+  test('a new tin is allocated after a skipped week', () => {
+    const history = [{ date: '2026-11-05', assignments: { paying: 'Rick', balls: 'Gareth', drinks: 'Lachy' } }];
+    const result = assignDuties(PLAYERS, history, '2026-11-19');
+    expect(result.ballsWeek).toBe(true);
+    expect(result.assignments.balls).not.toBeNull();
+  });
+
+  test('a new tin is still allocated when one was already due and a week was skipped', () => {
+    const history = [
+      { date: '2026-10-29', ballsWeek: true, assignments: { paying: 'Rick', balls: 'Gareth', drinks: 'Lachy' } },
+      { date: '2026-11-05', ballsWeek: false, assignments: { paying: 'Gareth', balls: null, drinks: 'Miles' } },
+    ];
+    const result = assignDuties(PLAYERS, history, '2026-11-19');
+    expect(result.ballsWeek).toBe(true);
+  });
+
+  test('a new tin opened on a week 2 makes the next game a week 2', () => {
+    const history = [
+      { date: '2026-10-15', ballsWeek: true, assignments: { paying: 'Rick', balls: 'Gareth', drinks: 'Lachy' } },
+      { date: '2026-10-29', ballsWeek: false, assignments: { paying: 'Gareth', balls: 'Rick', drinks: 'Miles' } },
+    ];
+    const result = assignDuties(PLAYERS, history, '2026-11-05');
+    expect(result.ballsWeek).toBe(false);
+    expect(result.assignments.balls).toBeNull();
+  });
+
+  test('balls are reused when the gap is exactly 10 days', () => {
+    const history = [{ date: '2026-11-05', assignments: { paying: 'Rick', balls: 'Gareth', drinks: 'Lachy' } }];
+    expect(assignDuties(PLAYERS, history, '2026-11-15').ballsWeek).toBe(false);
+    expect(assignDuties(PLAYERS, history, '2026-11-16').ballsWeek).toBe(true);
+  });
+
   test('assigned players are all from the playing list', () => {
     const result = assignDuties(PLAYERS, []);
     expect(PLAYERS).toContain(result.assignments.paying);
